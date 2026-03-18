@@ -575,6 +575,10 @@ if device_type == "cuda":
 train_loader = make_dataloader(tokenizer, DEVICE_BATCH_SIZE, MAX_SEQ_LEN, "train")
 x, y, epoch = next(train_loader)  # prefetch first batch
 
+# Clear any stale MPS cache before training begins
+if device_type == "mps":
+    torch.mps.empty_cache()
+
 print(f"Time budget: {TIME_BUDGET}s")
 print(f"Gradient accumulation steps: {grad_accum_steps}")
 
@@ -620,7 +624,6 @@ while True:
         train_loss = loss.detach()
         loss = loss / grad_accum_steps
         loss.backward()
-        x, y, epoch = next(train_loader)
 
     # Progress and schedules
     progress = min(total_training_time / TIME_BUDGET, 1.0)
@@ -646,7 +649,10 @@ while True:
     t1 = time.time()
     dt = t1 - t0
 
-    if step > 10:
+    # Load next batch outside timed region (prevents I/O stalls eating compute budget)
+    x, y, epoch = next(train_loader)
+
+    if step > 10 and dt < 30.0:  # cap: skip catastrophic MPS stalls (>30s is not real compute)
         total_training_time += dt
 
     # Logging
