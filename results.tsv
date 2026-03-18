@@ -67,3 +67,4 @@ c339126	1.338439	0.0	keep	Infra: MPS stall fix (empty_cache + dt cap + I/O outsi
 f57cc89	1.334196	0.0	discard	periodic MPS empty_cache every 100 steps (marginal; not fixing slowdown)
 20e7484	1.335076	0.0	keep	TOTAL_BATCH_SIZE 2^15→2^14 DEVICE_BATCH_SIZE 16→8 (2x more gradient updates; 1145 steps)
 0824bf5	1.333472	0.0	keep	lm_head AdamW→Muon (faster 170ms/step; 1762 steps; orthogonalized output)
+3571190	1.325223	0.0	keep	restore TOTAL_BATCH_SIZE 2^15 DEVICE_BATCH_SIZE=16 (801 steps; better gradient signal)

@@ -276,12 +276,15 @@ class GPT(nn.Module):
             dict(kind='adamw', params=resid_params, lr=scalar_lr * 0.01, betas=adam_betas, eps=1e-10, weight_decay=0.0),
             dict(kind='adamw', params=x0_params, lr=scalar_lr, betas=(0.96, 0.95), eps=1e-10, weight_decay=0.0),
         ]
-        # lm_head gets Muon like transformer matrices (orthogonalized updates for output embedding)
+        # lm_head gets Muon with its own LR (orthogonalized updates for output embedding)
+        lm_head_set = set(id(p) for p in lm_head_params)
         all_matrix_params = matrix_params + lm_head_params
         for shape in sorted({p.shape for p in all_matrix_params}):
             group_params = [p for p in all_matrix_params if p.shape == shape]
+            is_lm_head_group = any(id(p) in lm_head_set for p in group_params)
+            lr = unembedding_lr if is_lm_head_group else matrix_lr
             param_groups.append(dict(
-                kind='muon', params=group_params, lr=matrix_lr,
+                kind='muon', params=group_params, lr=lr,
                 momentum=0.95, ns_steps=4, beta2=0.95, weight_decay=weight_decay,
             ))
         optimizer = MuonAdamW(param_groups)
@@ -488,7 +491,7 @@ WINDOW_PATTERN = "L"    # sliding window pattern: L=full, S=half context
 # Optimization
 TOTAL_BATCH_SIZE = 2**15 # ~32K tokens per optimizer step
 EMBEDDING_LR = 0.6      # learning rate for token embeddings (Adam)
-UNEMBEDDING_LR = 0.004  # learning rate for lm_head (Adam)
+UNEMBEDDING_LR = 0.02   # learning rate for lm_head (Muon; separate from matrix_lr)
 MATRIX_LR = 0.055       # learning rate for matrix parameters (Muon)
 SCALAR_LR = 0.5         # learning rate for per-layer scalars (Adam)
 WEIGHT_DECAY = 0.2      # cautious weight decay for Muon
