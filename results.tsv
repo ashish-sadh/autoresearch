@@ -71,3 +71,4 @@ f57cc89	1.334196	0.0	discard	periodic MPS empty_cache every 100 steps (marginal;
 a8c7be0	1.318871	0.0	keep	lm_head Muon LR 0.055→0.02 (separate from matrix_lr; 865 steps)
 bac5a41	1.336165	0.0	discard	lm_head Muon LR 0.02→0.01 (too low; 0.02 confirmed optimal)
 d3f8d90	1.385109	0.0	discard	DEVICE_BATCH_SIZE 16→8 grad_accum=2 (bug: same batch reused; grad_accum broken)
+31c082f	1.315839	0.0	keep	lm_head ns_steps 4→5 (tall matrix benefits from more precise polar decomp; 900 steps)
