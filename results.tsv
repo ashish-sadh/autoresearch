@@ -65,3 +65,4 @@ c39508f	1.423552	0.0	discard	resid_lambdas LR 0.01→0.1x scalar (10x faster; hu
 5dfb37d	1.632789	0.0	discard	value_embeds LR halved (150 steps; MPS data-loader stall 949s at step 149)
 c339126	1.338439	0.0	keep	Infra: MPS stall fix (empty_cache + dt cap + I/O outside timing)
 f57cc89	1.334196	0.0	discard	periodic MPS empty_cache every 100 steps (marginal; not fixing slowdown)
+20e7484	1.335076	0.0	keep	TOTAL_BATCH_SIZE 2^15→2^14 DEVICE_BATCH_SIZE 16→8 (2x more gradient updates; 1145 steps)
