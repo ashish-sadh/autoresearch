@@ -283,9 +283,10 @@ class GPT(nn.Module):
             group_params = [p for p in all_matrix_params if p.shape == shape]
             is_lm_head_group = any(id(p) in lm_head_set for p in group_params)
             lr = unembedding_lr if is_lm_head_group else matrix_lr
+            ns = 5 if is_lm_head_group else 4  # tall matrix [8192,256] benefits from more NS steps
             param_groups.append(dict(
                 kind='muon', params=group_params, lr=lr,
-                momentum=0.95, ns_steps=4, beta2=0.95, weight_decay=weight_decay,
+                momentum=0.95, ns_steps=ns, beta2=0.95, weight_decay=weight_decay,
             ))
         optimizer = MuonAdamW(param_groups)
         for group in optimizer.param_groups:
