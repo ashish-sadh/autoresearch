@@ -107,3 +107,4 @@ e69e110	1.317789	0.0	keep	Muon momentum warmup 300→200 steps (38% vs 57% of tr
 6c52d0a	1.321554	0.0	discard	Muon momentum warmup 200→150 steps (too fast; 200 optimal)
 3007d4c	1.327051	0.0	discard	Muon momentum warmup 200→250 steps (too slow; 200 confirmed optimal)
 89a0472	1.323266	0.0	discard	MATRIX_LR 0.060→0.055 with warmup=200 (worse; 0.060 confirmed optimal)
+2a50acd	1.320998	0.0	discard	Muon initial momentum 0.85→0.90 (worse; 0.85→0.95 ramp optimal)
