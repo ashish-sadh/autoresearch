@@ -73,3 +73,7 @@ bac5a41	1.336165	0.0	discard	lm_head Muon LR 0.02→0.01 (too low; 0.02 confirme
 d3f8d90	1.385109	0.0	discard	DEVICE_BATCH_SIZE 16→8 grad_accum=2 (bug: same batch reused; grad_accum broken)
 31c082f	1.315839	0.0	keep	lm_head ns_steps 4→5 (tall matrix benefits from more precise polar decomp; 900 steps)
 d41f256	1.328533	0.0	discard	lm_head Muon LR 0.02→0.03 (re-probe with ns_steps=5; optimal may have shifted)
+8ffa55d	1.399764	0.0	keep	DEPTH=8 baseline (DEPTH 4→8; 237 steps; 50.3M params; fresh start)
+911ecc1	1.378416	0.0	keep	TOTAL_BATCH_SIZE 2^15→2^14 DEVICE_BATCH_SIZE 16→8 (2x gradient updates; 481 steps)
+856fe2b	1.402115	0.0	discard	TOTAL_BATCH_SIZE 2^14→2^13 DEVICE_BATCH_SIZE 8→4 (too small batch; noisy gradients)
+8ee817f	1.383541	0.0	discard	MATRIX_LR 0.055→0.065 (too high; 0.055 confirmed better)
