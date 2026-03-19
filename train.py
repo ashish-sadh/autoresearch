@@ -297,7 +297,7 @@ class GPT(nn.Module):
             group_params = [p for p in all_matrix_params if p.shape == shape]
             is_lm_head_group = any(id(p) in lm_head_set for p in group_params)
             lr = unembedding_lr if is_lm_head_group else matrix_lr
-            ns = 5 if is_lm_head_group else 4  # tall matrix [8192,256] benefits from more NS steps
+            ns = 5  # DEPTH=8 has 512-dim matrices; all benefit from more precise polar decomp
             param_groups.append(dict(
                 kind='muon', params=group_params, lr=lr,
                 momentum=0.95, ns_steps=ns, beta2=0.95, weight_decay=weight_decay,
@@ -512,7 +512,7 @@ SCALAR_LR = 0.5         # learning rate for per-layer scalars (Adam)
 WEIGHT_DECAY = 0.2      # cautious weight decay for Muon
 ADAM_BETAS = (0.8, 0.95) # Adam beta1, beta2
 WARMUP_RATIO = 0.0      # fraction of time budget for LR warmup
-WARMDOWN_RATIO = 0.15   # fraction of time budget for LR warmdown
+WARMDOWN_RATIO = 0.2    # fraction of time budget for LR warmdown
 FINAL_LR_FRAC = 0.0     # final LR as fraction of initial
 
 # Model size
