@@ -99,3 +99,4 @@ ca4e995	1.327166	0.0	keep	SCALAR_LR 0.5→1.0 (faster skip connection adaptation
 e241256	1.331617	0.0	discard	SCALAR_LR 1.0→2.0 (too high; 1.0 confirmed optimal)
 fade2db	1.324661	0.0	keep	WEIGHT_DECAY 0.2→0.1 (less regularization; 520 steps)
 ba300d4	1.328268	0.0	discard	WEIGHT_DECAY 0.1→0.05 (too low; 0.1 optimal)
+db3b38f	1.330000	0.0	discard	WEIGHT_DECAY 0.1→0.15 (worse; 0.1 confirmed optimal)
