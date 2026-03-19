@@ -499,16 +499,16 @@ class MuonAdamW(torch.optim.Optimizer):
 # ---------------------------------------------------------------------------
 
 # Model architecture
-ASPECT_RATIO = 64       # model_dim = depth * ASPECT_RATIO (384-dim with DEPTH=6)
+ASPECT_RATIO = 32       # model_dim = depth * ASPECT_RATIO (256-dim = same width as DEPTH=4 but 8 layers deep)
 HEAD_DIM = 128          # target head dimension for attention
-WINDOW_PATTERN = "L"    # sliding window pattern: L=full
+WINDOW_PATTERN = "L"    # sliding window pattern: L=full, S=full
 
 # Optimization
-TOTAL_BATCH_SIZE = 2**14 # ~16K tokens per optimizer step
+TOTAL_BATCH_SIZE = 2**15 # ~32K tokens per optimizer step (DEPTH-4 style; may give better gradient signal)
 EMBEDDING_LR = 0.6      # learning rate for token embeddings (Adam)
 UNEMBEDDING_LR = 0.02   # learning rate for lm_head (Muon)
-MATRIX_LR = 0.045       # learning rate for matrix parameters (Muon; 384-dim between 256 and 512)
-SCALAR_LR = 1.0         # learning rate for per-layer scalars (Adam)
+MATRIX_LR = 0.060       # learning rate for matrix parameters (Muon; re-tune with WD=0.1)
+SCALAR_LR = 1.0         # learning rate for per-layer scalars (Adam; higher for deeper model)
 WEIGHT_DECAY = 0.1      # cautious weight decay for Muon
 ADAM_BETAS = (0.8, 0.95) # Adam beta1, beta2
 WARMUP_RATIO = 0.0      # fraction of time budget for LR warmup
@@ -516,8 +516,8 @@ WARMDOWN_RATIO = 0.2    # fraction of time budget for LR warmdown
 FINAL_LR_FRAC = 0.0     # final LR as fraction of initial
 
 # Model size
-DEPTH = 6               # number of transformer layers (6 layers at 384-dim; ~600 steps)
-DEVICE_BATCH_SIZE = 8   # per-device batch size (for 2^14 batch)
+DEPTH = 8               # number of transformer layers
+DEVICE_BATCH_SIZE = 16  # per-device batch size (restore to 16 for 2^15 batch)
 
 # ---------------------------------------------------------------------------
 # Setup: tokenizer, model, optimizer, dataloader
@@ -656,7 +656,7 @@ def get_lr_multiplier(progress):
         return cooldown * 1.0 + (1 - cooldown) * FINAL_LR_FRAC
 
 def get_muon_momentum(step):
-    frac = min(step / 300, 1)
+    frac = min(step / 200, 1)  # shorter warmup: 300→200 steps (57%→38% of 529 total)
     return (1 - frac) * 0.85 + frac * 0.95
 
 def get_weight_decay(progress):
