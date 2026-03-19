@@ -104,3 +104,4 @@ db3b38f	1.330000	0.0	discard	WEIGHT_DECAY 0.1→0.15 (worse; 0.1 confirmed optim
 865f6ae	1.330294	0.0	discard	MATRIX_LR 0.060→0.065 (too high; 0.060 confirmed with WD=0.1)
 d7bfe5f	1.327231	0.0	discard	DEPTH 8→6 AR 32→64 (384-dim 6-layer; worse than 256-dim 8-layer)
 e69e110	1.317789	0.0	keep	Muon momentum warmup 300→200 steps (38% vs 57% of training; 525 steps)
+6c52d0a	1.321554	0.0	discard	Muon momentum warmup 200→150 steps (too fast; 200 optimal)
