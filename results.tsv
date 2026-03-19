@@ -106,3 +106,4 @@ d7bfe5f	1.327231	0.0	discard	DEPTH 8→6 AR 32→64 (384-dim 6-layer; worse than
 e69e110	1.317789	0.0	keep	Muon momentum warmup 300→200 steps (38% vs 57% of training; 525 steps)
 6c52d0a	1.321554	0.0	discard	Muon momentum warmup 200→150 steps (too fast; 200 optimal)
 3007d4c	1.327051	0.0	discard	Muon momentum warmup 200→250 steps (too slow; 200 confirmed optimal)
+89a0472	1.323266	0.0	discard	MATRIX_LR 0.060→0.055 with warmup=200 (worse; 0.060 confirmed optimal)
