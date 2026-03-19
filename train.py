@@ -1,14 +1,19 @@
 """
 Autoresearch pretraining script. Single-GPU, single-file.
 Cherry-picked and simplified from nanochat.
-Usage: uv run train.py
+Usage:
+  uv run train.py                  # 5 min (loop default)
+  uv run train.py --time 1800      # 30 min hands-on
+  uv run train.py --time 28800     # 8 hours overnight
 """
 
 import os
 os.environ["PYTORCH_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
 
+import argparse
 import gc
+import json
 import time
 from dataclasses import dataclass, asdict
 
@@ -16,6 +21,14 @@ import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+_parser = argparse.ArgumentParser(add_help=False)
+_parser.add_argument("--time", type=int, default=None, help="Override TIME_BUDGET in seconds")
+_parser.add_argument("--resume", action="store_true", help="Resume from named checkpoint (only use with --time)")
+_parser.add_argument("--ckpt-name", type=str, default="latest", help="Checkpoint name prefix; file saved as NAME_dDEPTH.pt (default: latest)")
+_parser.add_argument("--init-from", type=str, default=None, help="Init model weights from .pt file, fresh optimizer (mutually exclusive with --resume)")
+_parser.add_argument("--ckpt-interval", type=int, default=300, help="Save resume checkpoint every N seconds of training time (default: 300)")
+_args, _ = _parser.parse_known_args()
 
 def verify_macos_env():
     if sys.platform != "darwin":
@@ -27,7 +40,8 @@ def verify_macos_env():
 
 verify_macos_env()
 
-from prepare import MAX_SEQ_LEN, TIME_BUDGET, Tokenizer, make_dataloader, evaluate_bpb
+from prepare import MAX_SEQ_LEN, TIME_BUDGET as _TIME_BUDGET, Tokenizer, make_dataloader, evaluate_bpb
+TIME_BUDGET = _args.time if _args.time is not None else _TIME_BUDGET
 
 # ---------------------------------------------------------------------------
 # GPT Model
@@ -502,7 +516,7 @@ WARMDOWN_RATIO = 0.2    # fraction of time budget for LR warmdown
 FINAL_LR_FRAC = 0.0     # final LR as fraction of initial
 
 # Model size
-DEPTH = 4               # number of transformer layers
+DEPTH = 8               # number of transformer layers
 DEVICE_BATCH_SIZE = 16  # per-device batch size (reduce if OOM)
 
 # ---------------------------------------------------------------------------
@@ -573,6 +587,49 @@ optimizer = model.setup_optimizer(
     weight_decay=WEIGHT_DECAY,
 )
 
+# ---------------------------------------------------------------------------
+# Resume checkpoint (only for --time runs)
+# ---------------------------------------------------------------------------
+
+RESUME_CKPT_DIR = os.path.join(os.path.expanduser("~"), ".cache", "autoresearch", "checkpoints", "resume")
+_resume_ckpt_path = os.path.join(RESUME_CKPT_DIR, f"{_args.ckpt_name}_d{DEPTH}.pt")
+_use_checkpointing = _args.time is not None  # never checkpoint 5-min loop runs
+
+if _args.resume and _args.init_from:
+    raise ValueError("--resume and --init-from are mutually exclusive")
+
+_resumed_step = 0
+_resumed_smooth_loss = 0.0
+_accumulated_prev = 0.0  # training seconds accumulated across previous sessions
+
+if _args.init_from:
+    # Warm model weights, fresh optimizer — used to start a deep-train from the loop's best model
+    _init = torch.load(_args.init_from, map_location=device, weights_only=False)
+    _init_state = _init["model_state"] if isinstance(_init, dict) and "model_state" in _init else _init
+    model.load_state_dict(_init_state)
+    print(f"Initialized model weights from {_args.init_from} (fresh optimizer)")
+
+if _args.resume:
+    if not _use_checkpointing:
+        print("WARNING: --resume ignored (only valid with --time)")
+    elif os.path.exists(_resume_ckpt_path):
+        print(f"Resuming from {_resume_ckpt_path}")
+        _ckpt = torch.load(_resume_ckpt_path, map_location=device, weights_only=False)
+        # Arch compatibility check
+        _saved_cfg = _ckpt.get("model_config")
+        if _saved_cfg and _saved_cfg != asdict(config):
+            print(f"WARNING: checkpoint arch differs from current — weights may be incompatible")
+            print(f"  Saved:   {_saved_cfg}")
+            print(f"  Current: {asdict(config)}")
+        model.load_state_dict(_ckpt["model_state"])
+        optimizer.load_state_dict(_ckpt["optimizer_state"])
+        _resumed_step = _ckpt["step"]
+        _resumed_smooth_loss = _ckpt.get("smooth_train_loss", 0.0)
+        _accumulated_prev = _ckpt.get("accumulated_training_seconds", 0.0)
+        print(f"  Resumed at step {_resumed_step} | accumulated {_accumulated_prev:.0f}s | smooth_loss {_resumed_smooth_loss:.4f}")
+    else:
+        print(f"No checkpoint found at {_resume_ckpt_path} — starting fresh")
+
 # torch.compile is unstable on MPS, only use on CUDA
 if device_type == "cuda":
     model = torch.compile(model, dynamic=False)
@@ -610,9 +667,10 @@ def get_weight_decay(progress):
 # ---------------------------------------------------------------------------
 
 t_start_training = time.time()
-smooth_train_loss = 0
+smooth_train_loss = _resumed_smooth_loss
 total_training_time = 0
-step = 0
+step = _resumed_step
+_last_ckpt_training_time = 0.0
 
 def sync_device(device_type):
     if device_type == "cuda":
@@ -660,6 +718,24 @@ while True:
     if step > 10 and dt < 30.0:  # cap: skip catastrophic MPS stalls (>30s is not real compute)
         total_training_time += dt
 
+    # Periodic resume checkpoint (only for --time runs, not the 5-min loop)
+    if _use_checkpointing and (total_training_time - _last_ckpt_training_time) >= _args.ckpt_interval:
+        os.makedirs(RESUME_CKPT_DIR, exist_ok=True)
+        _model_state = {k.removeprefix("_orig_mod."): v for k, v in model.state_dict().items()}
+        _ckpt_data = {
+            "step": step + 1,
+            "smooth_train_loss": smooth_train_loss,
+            "model_state": _model_state,
+            "optimizer_state": optimizer.state_dict(),
+            "model_config": asdict(config),
+            "accumulated_training_seconds": _accumulated_prev + total_training_time,
+        }
+        _tmp = _resume_ckpt_path + ".tmp"
+        torch.save(_ckpt_data, _tmp)
+        os.replace(_tmp, _resume_ckpt_path)
+        _last_ckpt_training_time = total_training_time
+        print(f"\n[ckpt] saved resume checkpoint at step {step + 1} ({total_training_time:.0f}s)", flush=True)
+
     # Logging
     ema_beta = 0.9
     smooth_train_loss = ema_beta * smooth_train_loss + (1 - ema_beta) * train_loss_f
@@ -687,6 +763,23 @@ while True:
 
 print()  # newline after \r training log
 
+# Final checkpoint save (always, for --time runs) — ensures checkpoint exists even for short runs
+if _use_checkpointing:
+    os.makedirs(RESUME_CKPT_DIR, exist_ok=True)
+    _model_state = {k.removeprefix("_orig_mod."): v for k, v in model.state_dict().items()}
+    _ckpt_data = {
+        "step": step,
+        "smooth_train_loss": smooth_train_loss,
+        "model_state": _model_state,
+        "optimizer_state": optimizer.state_dict(),
+        "model_config": asdict(config),
+        "accumulated_training_seconds": _accumulated_prev + total_training_time,
+    }
+    _tmp = _resume_ckpt_path + ".tmp"
+    torch.save(_ckpt_data, _tmp)
+    os.replace(_tmp, _resume_ckpt_path)
+    print(f"[ckpt] saved final checkpoint → {_resume_ckpt_path} ({(_accumulated_prev + total_training_time)/3600:.2f}h accumulated)")
+
 total_tokens = step * TOTAL_BATCH_SIZE
 
 # Final eval
@@ -713,3 +806,44 @@ print(f"total_tokens_M:   {total_tokens / 1e6:.1f}")
 print(f"num_steps:        {step}")
 print(f"num_params_M:     {num_params / 1e6:.1f}")
 print(f"depth:            {DEPTH}")
+
+# ---------------------------------------------------------------------------
+# Save checkpoint (only if this run is the best so far)
+# ---------------------------------------------------------------------------
+
+CHECKPOINT_DIR = os.path.join(os.path.expanduser("~"), ".cache", "autoresearch", "checkpoints", f"d{DEPTH}")
+os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+
+best_bpb_path = os.path.join(CHECKPOINT_DIR, "best_val_bpb.txt")
+prev_best = float("inf")
+if os.path.exists(best_bpb_path):
+    with open(best_bpb_path) as f:
+        prev_best = float(f.read().strip())
+
+if val_bpb < prev_best:
+    # Strip torch.compile prefix if present
+    model_state = {k.removeprefix("_orig_mod."): v for k, v in model.state_dict().items()}
+    # Convert bfloat16 → float32 so the checkpoint loads on MPS/CPU without issues
+    model_state = {k: v.float() if v.dtype == torch.bfloat16 else v for k, v in model_state.items()}
+
+    model_path = os.path.join(CHECKPOINT_DIR, "best_model.pt")
+    torch.save(model_state, model_path)
+
+    meta = {
+        "step": step,
+        "val_bpb": val_bpb,
+        "model_config": asdict(config),
+        "vocab_size": vocab_size,
+        "total_tokens": total_tokens,
+        "training_seconds": total_training_time,
+    }
+    meta_path = os.path.join(CHECKPOINT_DIR, "best_meta.json")
+    with open(meta_path, "w") as f:
+        json.dump(meta, f, indent=2)
+
+    with open(best_bpb_path, "w") as f:
+        f.write(str(val_bpb))
+
+    print(f"New best val_bpb {val_bpb:.6f} (was {prev_best:.6f}) → saved checkpoint to {CHECKPOINT_DIR}/best_model.pt")
+else:
+    print(f"val_bpb {val_bpb:.6f} did not beat best {prev_best:.6f} — checkpoint unchanged")
