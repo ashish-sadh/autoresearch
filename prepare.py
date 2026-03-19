@@ -39,7 +39,7 @@ verify_macos_env()
 # ---------------------------------------------------------------------------
 
 MAX_SEQ_LEN = 2048       # context length
-TIME_BUDGET = 300        # training time budget in seconds (5 minutes)
+TIME_BUDGET = 300        # training time budget in seconds (5 min); override with --time flag in train.py
 EVAL_TOKENS = 40 * 524288  # number of tokens for val eval
 
 # ---------------------------------------------------------------------------
@@ -59,7 +59,10 @@ VOCAB_SIZE = 8192
 SPLIT_PATTERN = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1,2}| ?[^\s\p{L}\p{N}]++[\r\n]*|\s*[\r\n]|\s+(?!\S)|\s+"""
 
 SPECIAL_TOKENS = [f"<|reserved_{i}|>" for i in range(4)]
-BOS_TOKEN = "<|reserved_0|>"
+BOS_TOKEN       = "<|reserved_0|>"
+USER_TOKEN      = "<|reserved_1|>"   # marks start of a user turn
+ASSISTANT_TOKEN = "<|reserved_2|>"   # marks start of an assistant turn
+TURN_END_TOKEN  = "<|reserved_3|>"   # marks end of any turn
 
 # ---------------------------------------------------------------------------
 # Data download
