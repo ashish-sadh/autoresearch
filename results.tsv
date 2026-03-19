@@ -100,3 +100,4 @@ e241256	1.331617	0.0	discard	SCALAR_LR 1.0→2.0 (too high; 1.0 confirmed optima
 fade2db	1.324661	0.0	keep	WEIGHT_DECAY 0.2→0.1 (less regularization; 520 steps)
 ba300d4	1.328268	0.0	discard	WEIGHT_DECAY 0.1→0.05 (too low; 0.1 optimal)
 db3b38f	1.330000	0.0	discard	WEIGHT_DECAY 0.1→0.15 (worse; 0.1 confirmed optimal)
+9a283b1	1.324053	0.0	keep	MATRIX_LR 0.055→0.060 with WD=0.1 (marginal gain; 518 steps)
