@@ -85,3 +85,4 @@ ceb39ba	1.370570	0.0	discard	MATRIX_LR 0.035→0.030 (too low; 0.035 confirmed o
 55bca97	1.372607	0.0	discard	WARMDOWN_RATIO 0.2→0.15 (too short; 0.2 confirmed optimal)
 3cfa8f0	1.375257	0.0	discard	ns_steps 4→5 for all matrices (worse; 4 optimal for model matrices)
 62b40f2	1.371048	0.0	discard	UNEMBEDDING_LR 0.02→0.014 (worse; 0.02 optimal)
+6797108	1.375071	0.0	discard	UNEMBEDDING_LR 0.02→0.025 (too high; 0.02 confirmed optimal)
