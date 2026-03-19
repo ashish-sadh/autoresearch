@@ -507,7 +507,7 @@ WINDOW_PATTERN = "L"    # sliding window pattern: L=full, S=full
 TOTAL_BATCH_SIZE = 2**15 # ~32K tokens per optimizer step (DEPTH-4 style; may give better gradient signal)
 EMBEDDING_LR = 0.6      # learning rate for token embeddings (Adam)
 UNEMBEDDING_LR = 0.02   # learning rate for lm_head (Muon)
-MATRIX_LR = 0.060       # learning rate for matrix parameters (Muon; re-tune with WD=0.1)
+MATRIX_LR = 0.055       # learning rate for matrix parameters (Muon; re-confirm with warmup=200)
 SCALAR_LR = 1.0         # learning rate for per-layer scalars (Adam; higher for deeper model)
 WEIGHT_DECAY = 0.1      # cautious weight decay for Muon
 ADAM_BETAS = (0.8, 0.95) # Adam beta1, beta2
@@ -656,7 +656,7 @@ def get_lr_multiplier(progress):
         return cooldown * 1.0 + (1 - cooldown) * FINAL_LR_FRAC
 
 def get_muon_momentum(step):
-    frac = min(step / 250, 1)  # try 250 steps to bound 200 vs 300 optimum
+    frac = min(step / 200, 1)  # shorter warmup: 300→200 steps (57%→38% of 529 total)
     return (1 - frac) * 0.85 + frac * 0.95
 
 def get_weight_decay(progress):
