@@ -95,3 +95,4 @@ d7b36fa	1.369308	0.0	discard	ADAM_BETAS beta1 0.8→0.85 (marginal worse; 0.8 op
 670a44a	1.336027	0.0	discard	MATRIX_LR 0.055→0.050 (worse; 0.055 confirmed optimal for AR=32)
 a85312d	1.328402	0.0	keep	TOTAL_BATCH_SIZE 2^14→2^15 DEVICE_BATCH_SIZE 8→16 for AR=32 (529 steps)
 579182a	1.337317	0.0	discard	MATRIX_LR 0.055→0.060 with 2^15 batch (worse; 0.055 confirmed optimal)
+ca4e995	1.327166	0.0	keep	SCALAR_LR 0.5→1.0 (faster skip connection adaptation for DEPTH=8; 521 steps)

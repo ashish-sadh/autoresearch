@@ -508,7 +508,7 @@ TOTAL_BATCH_SIZE = 2**15 # ~32K tokens per optimizer step (DEPTH-4 style; may gi
 EMBEDDING_LR = 0.6      # learning rate for token embeddings (Adam)
 UNEMBEDDING_LR = 0.02   # learning rate for lm_head (Muon)
 MATRIX_LR = 0.055       # learning rate for matrix parameters (Muon; 256-dim like DEPTH=4)
-SCALAR_LR = 1.0         # learning rate for per-layer scalars (Adam; higher for deeper model)
+SCALAR_LR = 2.0         # learning rate for per-layer scalars (Adam; continue higher search)
 WEIGHT_DECAY = 0.2      # cautious weight decay for Muon
 ADAM_BETAS = (0.8, 0.95) # Adam beta1, beta2
 WARMUP_RATIO = 0.0      # fraction of time budget for LR warmup
