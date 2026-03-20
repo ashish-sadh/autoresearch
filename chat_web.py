@@ -82,7 +82,7 @@ class CausalSelfAttention(nn.Module):
         self.c_k = nn.Linear(self.n_embd, self.n_kv_head * self.head_dim, bias=False)
         self.c_v = nn.Linear(self.n_embd, self.n_kv_head * self.head_dim, bias=False)
         self.c_proj = nn.Linear(self.n_embd, self.n_embd, bias=False)
-        self.ve_gate_channels = 32
+        self.ve_gate_channels = 8
         self.ve_gate = nn.Linear(self.ve_gate_channels, self.n_kv_head, bias=False) if has_ve(layer_idx, config.n_layer) else None
 
     def forward(self, x, ve, cos_sin, window_size):
@@ -208,7 +208,8 @@ def find_checkpoint(sft=False):
                     pass
     if not candidates:
         return None
-    return max(candidates)[1]  # largest depth
+    # Prefer the most recently modified checkpoint
+    return max(candidates, key=lambda c: os.path.getmtime(os.path.join(c[1], "best_model.pt")))[1]
 
 device_type = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
 device = torch.device(device_type)
