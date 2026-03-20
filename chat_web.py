@@ -437,38 +437,87 @@ CHAT_HTML = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>autoresearch · chat</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, sans-serif; background: #080808; color: #e8e8e8;
-         display: flex; flex-direction: column; height: 100vh; max-width: 760px; margin: 0 auto; }
-  #header { padding: 12px 16px; border-bottom: 1px solid #1e1e1e; font-size: 0.85rem; color: #444; display: flex; align-items: center; justify-content: space-between; }
-  #header span { color: #777; }
-  #header a { color: #4a9eff; text-decoration: none; font-size: 0.8rem; }
-  #header a:hover { color: #76baff; }
-  #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .msg { max-width: 80%; padding: 10px 14px; border-radius: 2px; font-size: 0.9rem; line-height: 1.55; white-space: pre-wrap; }
-  .user { align-self: flex-end; background: #1a4a8a; color: #ddeeff; border-radius: 2px; }
-  .assistant { align-self: flex-start; background: #111; border: 1px solid #222; color: #d8d8d8; border-radius: 2px; }
-  .assistant.thinking { color: #444; font-style: italic; }
-  #footer { padding: 10px 16px; border-top: 1px solid #1e1e1e; display: flex; gap: 8px; align-items: flex-end; }
-  #input { flex: 1; background: #111; color: #e8e8e8; border: 1px solid #2a2a2a;
-           padding: 10px 14px; border-radius: 2px; font-family: inherit; font-size: 0.9rem;
-           resize: none; height: 44px; max-height: 160px; overflow-y: auto; outline: none; }
-  #input:focus { border-color: #3a6aaa; }
-  #send { background: #1a4a8a; color: #fff; border: none; width: 44px; height: 44px;
-          border-radius: 2px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  #send:hover { background: #2060b0; }
-  #send:disabled { opacity: 0.3; cursor: default; }
-  #controls { padding: 4px 16px 6px; display: flex; gap: 16px; border-top: 1px solid #111; }
-  label { font-size: 0.72rem; color: #444; }
-  input[type=range] { width: 80px; vertical-align: middle; accent-color: #4a9eff; }
-  span.val { font-size: 0.72rem; color: #666; }
-  #minfo { font-size: 0.7rem; color: #333; padding: 5px 16px 8px; flex-shrink: 0; }
-  #minfo a { color: #4a9eff; text-decoration: none; }
-  #minfo a:hover { color: #76baff; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #09090b; --surface: #111113; --border: #1f1f23; --border-focus: #3b6fd4;
+    --text: #f0f0f2; --text-dim: #71717a; --text-faint: #3f3f46;
+    --blue: #3b6fd4; --blue-bright: #5b8ff4; --blue-hover: #2a5abf;
+    --msg-user-bg: #1a3a6e; --msg-user-text: #c8dcff;
+  }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column;
+    max-width: 720px; margin: 0 auto;
+    height: 100dvh;
+  }
+  #header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px 13px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  #header .title { font-size: 0.88rem; font-weight: 600; letter-spacing: -0.01em; }
+  #header .sub { font-size: 0.74rem; color: var(--text-dim); margin-top: 1px; }
+  #header a { font-size: 0.74rem; color: var(--blue-bright); text-decoration: none; white-space: nowrap; margin-left: 12px; }
+  #header a:hover { color: #88aaff; }
+  #messages {
+    flex: 1; overflow-y: auto; padding: 16px;
+    display: flex; flex-direction: column; gap: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .msg {
+    max-width: 78%; padding: 10px 13px;
+    font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+    border-radius: 16px;
+  }
+  .user { align-self: flex-end; background: var(--msg-user-bg); color: var(--msg-user-text); border-radius: 16px 16px 4px 16px; }
+  .assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 4px 16px 16px 16px; }
+  .assistant.thinking { color: var(--text-faint); font-style: italic; }
+  #controls {
+    display: flex; gap: 14px; padding: 6px 16px;
+    border-top: 1px solid var(--border); flex-shrink: 0;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  #controls::-webkit-scrollbar { display: none; }
+  label { font-size: 0.7rem; color: var(--text-faint); white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+  input[type=range] { width: 70px; accent-color: var(--blue-bright); cursor: pointer; }
+  span.val { font-size: 0.7rem; color: var(--text-dim); min-width: 22px; }
+  #footer { padding: 10px 12px 12px; display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+  #input {
+    flex: 1; background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); padding: 11px 14px;
+    border-radius: 22px; font-family: inherit; font-size: 1rem; line-height: 1.4;
+    resize: none; min-height: 44px; max-height: 140px; overflow-y: auto;
+    outline: none; transition: border-color 0.15s; -webkit-appearance: none;
+  }
+  #input:focus { border-color: var(--border-focus); }
+  #input::placeholder { color: var(--text-faint); }
+  #send {
+    background: var(--blue); color: #fff; border: none;
+    width: 44px; height: 44px; border-radius: 50%;
+    cursor: pointer; font-size: 1.15rem;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: background 0.15s, transform 0.1s; -webkit-tap-highlight-color: transparent;
+  }
+  #send:hover { background: var(--blue-hover); }
+  #send:active { transform: scale(0.93); }
+  #send:disabled { opacity: 0.25; cursor: default; transform: none; }
+  #minfo { font-size: 0.68rem; color: var(--text-faint); padding: 0 16px 10px; flex-shrink: 0; }
+  #minfo a { color: var(--blue-bright); text-decoration: none; }
+  #minfo a:hover { color: #88aaff; }
+  @media (max-width: 480px) {
+    .msg { max-width: 88%; font-size: 0.88rem; }
+    #header { padding: 12px 14px; }
+    #messages { padding: 12px; }
+    #footer { padding: 8px 10px 10px; }
+  }
 </style>
 </head>
 <body>
-<div id="header"><span>autoresearch · SFT chat</span> · small model, be patient<a href="/blog">training log →</a></div>
+<div id="header">
+  <div><div class="title">autoresearch</div><div class="sub">SFT chat · small model, be patient</div></div>
+  <a href="/blog">training log →</a>
+</div>
 <div id="messages"></div>
 <div id="controls">
   <label>temp <input type="range" id="temp" min="0" max="2" step="0.05" value="0.7"><span class="val" id="temp-val">0.7</span></label>
@@ -476,14 +525,18 @@ CHAT_HTML = """<!DOCTYPE html>
   <label>max tokens <input type="range" id="maxtok" min="16" max="512" step="16" value="256"><span class="val" id="maxtok-val">256</span></label>
 </div>
 <div id="footer">
-  <textarea id="input" placeholder="Ask something..." rows="1"></textarea>
+  <textarea id="input" placeholder="Ask something…" rows="1"></textarea>
   <button id="send" onclick="sendMsg()">↑</button>
 </div>
 <script>
-let history = [];
-let es = null;
+let history = [], es = null;
+const inputEl = document.getElementById('input');
 document.querySelectorAll('input[type=range]').forEach(el => {
   el.addEventListener('input', () => document.getElementById(el.id+'-val').textContent = el.value);
+});
+inputEl.addEventListener('input', () => {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
 });
 function addMsg(role, text, id) {
   const div = document.createElement('div');
@@ -491,17 +544,16 @@ function addMsg(role, text, id) {
   if (id) div.id = id;
   div.textContent = text;
   document.getElementById('messages').appendChild(div);
-  div.scrollIntoView({behavior:'smooth'});
+  div.scrollIntoView({behavior: 'smooth', block: 'end'});
   return div;
 }
 function sendMsg() {
-  const input = document.getElementById('input');
-  const text = input.value.trim();
+  const text = inputEl.value.trim();
   if (!text || es) return;
-  input.value = '';
-  history.push({role:'user', content: text});
+  inputEl.value = ''; inputEl.style.height = 'auto';
+  history.push({role: 'user', content: text});
   addMsg('user', text);
-  const thinkingDiv = addMsg('assistant', '...', 'thinking');
+  const thinkingDiv = addMsg('assistant', '…', 'thinking');
   thinkingDiv.classList.add('thinking');
   document.getElementById('send').disabled = true;
   let accumulated = '';
@@ -518,12 +570,12 @@ function sendMsg() {
       es.close(); es = null;
       document.getElementById('send').disabled = false;
       thinkingDiv.classList.remove('thinking');
-      history.push({role:'assistant', content: accumulated});
+      history.push({role: 'assistant', content: accumulated});
       return;
     }
     accumulated += d.token;
     thinkingDiv.textContent = accumulated;
-    thinkingDiv.scrollIntoView({behavior:'smooth'});
+    thinkingDiv.scrollIntoView({behavior: 'smooth', block: 'end'});
   };
   es.onerror = () => {
     es.close(); es = null;
@@ -531,7 +583,7 @@ function sendMsg() {
     thinkingDiv.textContent = '[error]';
   };
 }
-document.getElementById('input').addEventListener('keydown', e => {
+inputEl.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
 });
 </script>

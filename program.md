@@ -225,17 +225,53 @@ except Exception as e:
 
 ### Step 4 — Write a blog entry
 
-Append a dated entry to `blog.md`:
+Use the chat UI to run these **three fixed benchmark prompts** on the newly SFT'd model. Copy the responses verbatim:
+
+1. `Explain why the sky is blue.`
+2. `What is 2 + 2 and why?`
+3. `Tell me a short story about a robot who learns to feel.`
+
+These same prompts are used every entry so responses are directly comparable across deep-trains.
+
+Then read the previous blog entry and write an honest assessment comparing this entry's responses to the last one across four dimensions:
+
+- **Grammar**: sentence structure, punctuation, fluency
+- **Coherency**: does the response stay on topic, is it internally consistent?
+- **Topic follow-through**: does it actually answer the question asked, or drift?
+- **Emerging reasoning**: any signs of cause-effect, logical structure, or multi-step thinking?
+
+Score each dimension: `worse` / `same` / `better` with one sentence of evidence.
+
+Append to `blog.md`:
 
 ```markdown
 ## #N · YYYY-MM-DD · Xh accumulated pretraining
 
-**val_bpb**: X.XXXXXX · **model**: depth=24 · ~400M params
+**val_bpb**: X.XXXXXX · **model**: depth=24 · ~860M params · Xh pretraining
 
-**Last 5 improvements**: [one sentence each describing the 5 keep experiments that triggered this deep-train]
+**Last 5 improvements**: [one sentence each]
 
-**Q: [interesting prompt]**
-> [model's actual response — copy verbatim from the chat UI]
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> [verbatim response]
+
+*Q: What is 2 + 2 and why?*
+> [verbatim response]
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> [verbatim response]
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | better/same/worse | [one sentence] |
+| Coherency | better/same/worse | [one sentence] |
+| Topic follow-through | better/same/worse | [one sentence] |
+| Emerging reasoning | better/same/worse | [one sentence] |
+
+[2–3 sentence overall summary of what changed and why]
 ```
 
 ### Log deep-train results

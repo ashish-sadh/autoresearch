@@ -22,7 +22,26 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 **Last 5 improvements**: MATRIX_LR 0.060→0.065 gave marginal gain at d4 256-dim; removing weight decay (WD 0.1→0.0) was a surprisingly large win — small models with short training horizons don't benefit from regularization; EMBEDDING_LR 0.6→0.4 improved further in the no-WD regime; MATRIX_LR 0.065→0.070 confirmed the optimum shifts higher without weight decay; SCALAR_LR 1.0→2.0 squeezed out one more improvement, showing per-layer scalars adapt faster in the unregularized regime.
 
-**Q: Why is the sky blue?**
-> The 350+ Creation of a Quartz Series, also known as AVC, is an innovative and exciting product that combines stunning scenes with vibrant colors. Its colorful leaves captivate the eyes of its readers, adding depth to your visual interest. When viewed from above, it's time to explore various vivid and dramatic shadows. The sky blue sets the tone for a vibrant and stunning effect on the scene, making it a must-have in any professional setting.
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The sky's white and greenish color, while it is darkness. Slowly flowing water into one of two different colors: a deep red (Green), grey or orange. We can see that in the picture above, "melting" is not just about the shadows. This is an evident, but mystical and infamously infamous idea. I am glad we have been using our observations for some time now with the sky's white to blue itself! Here are a few common ways you can create this visual experience: 1. Call "Power": Green or green lines, such as Grey or dark color, often come from other colors like red or yellow. 2. Flowering water: A rainbow of blue and gray can be found in a very vibrant mix, so it is best to try the same size again.
+
+*Q: What is 2 + 2 and why?*
+> The answer to this question can depend on several factors. First, the type of fluid in a system should be considered as "cool" or "when an entire system is connected," because it's more typically used for cooling purposes. To determine if you need extra coolant at home and would like to know what specifications are required or how often you're going to install them, the answer will depend on various factors. 1. Country: The type of fluid in a system should be considered as "cool" or "when an entire system is connected." This means your installation may not always perform like calculating specifications.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> We have the world's most popular inhabitants, and we know that you can expect a few of these ideas to be quite powerful. This is a great opportunity for learners to explore all aspects of your life and get started with this incredible activity. Here are some interesting stories from our perspective on robotics: 1. Error: This book delves into the world of robots that can provide you with opportunities to engage in activities like reading, playing sports, or engaging in physical activity. 2. Tell me about a new robot with an idea worth it and how they develop their own sense of intellect and motivation.
+
+**Quality assessment** *(baseline — no prior entry to compare)*
+
+| Dimension | Baseline observation |
+|---|---|
+| Grammar | Sentences are individually grammatical but content is pure hallucination |
+| Coherency | None — each sentence contradicts or ignores the previous |
+| Topic follow-through | Zero — all three questions completely ignored; model outputs pseudo-listicle filler |
+| Emerging reasoning | None — no causal structure, no logical steps, no self-reference to the question |
+
+This is the 1h baseline on a small 256-dim 24-layer architecture (~52M params). The model has absorbed enough web-text patterns to produce fluent-looking English with formatting (numbered lists, bold), but has no grounding in meaning. All future entries use the full 1536-dim ~860M param model with progressively more pretraining hours.
 
 ---
