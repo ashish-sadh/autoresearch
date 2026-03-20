@@ -214,6 +214,8 @@ device_type = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cu
 device = torch.device(device_type)
 print(f"Device: {device_type}")
 
+CHECKPOINT_DIR = None  # set below if not using --checkpoint
+
 if args.checkpoint:
     # Load from a resume/deep-train checkpoint directly
     print(f"Loading deep-train checkpoint from {args.checkpoint}...")
@@ -257,6 +259,41 @@ user_id = enc.encode_single_token("<|reserved_1|>")
 asst_id = enc.encode_single_token("<|reserved_2|>")
 end_id  = enc.encode_single_token("<|reserved_3|>")
 print(f"Tokenizer loaded (vocab_size={enc.n_vocab})")
+
+# ---------------------------------------------------------------------------
+# Model stats footer
+# ---------------------------------------------------------------------------
+
+_num_params = sum(p.numel() for p in model.parameters())
+_accum_hours = 0.0
+_tokens_seen = 0
+
+if args.checkpoint:
+    _accum_hours = ckpt.get("accumulated_training_seconds", 0) / 3600
+    _tokens_seen = ckpt.get("step", 0) * 32768  # approximate
+elif args.sft and CHECKPOINT_DIR is not None:
+    # Read accum_hours from versioned SFT meta (has accurate accumulated pretraining)
+    _versioned_metas = sorted([f for f in os.listdir(CHECKPOINT_DIR) if f.startswith("meta_v") and f.endswith(".json")])
+    if _versioned_metas:
+        with open(os.path.join(CHECKPOINT_DIR, _versioned_metas[-1])) as _f:
+            _vm = json.load(_f)
+        _accum_hours = _vm.get("accum_hours", 0.0)
+    # Total tokens seen: read from the base (non-sft) checkpoint meta
+    _base_depth = config.n_layer
+    _base_dir = os.path.join(CHECKPOINTS_DIR, f"d{_base_depth}")
+    _base_meta_path = os.path.join(_base_dir, "best_meta.json")
+    if os.path.exists(_base_meta_path):
+        with open(_base_meta_path) as _f:
+            _base_meta = json.load(_f)
+        _tokens_seen = _base_meta.get("total_tokens", 0)
+
+_footer_html = (
+    f'<div id="minfo">'
+    f'depth {config.n_layer} · {_num_params/1e6:.1f}M params'
+    f' · {_tokens_seen/1e9:.2f}B tokens · {_accum_hours:.1f}h pretraining'
+    f' · <a href="/blog" style="color:#4a9eff;text-decoration:none">training log →</a>'
+    f'</div>'
+)
 
 # ---------------------------------------------------------------------------
 # Generation
@@ -312,6 +349,7 @@ BASE_HTML = """<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>autoresearch · text completion</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -335,11 +373,14 @@ BASE_HTML = """<!DOCTYPE html>
   .prompt-text { color: #7ec8e3; }
   .gen-text { color: #e0e0e0; }
   #status { font-size: 0.75rem; color: #555; margin-top: 6px; }
+  #minfo { font-size: 0.72rem; color: #444; margin-top: 24px; padding-top: 8px; border-top: 1px solid #1e1e1e; }
+  #minfo a { color: #555; text-decoration: none; }
+  #minfo a:hover { color: #888; }
 </style>
 </head>
 <body>
 <h1>autoresearch · base model · text completion</h1>
-<p class="sub">Type a prompt. The model continues it. (Base model — not instruction-tuned. Try: "Once upon a time" or "The history of")</p>
+<p class="sub">Type a prompt. The model continues it. (Base model — not instruction-tuned. Try: "Once upon a time" or "The history of") · <a href="/blog" style="color:#555;text-decoration:none">training log →</a></p>
 <textarea id="prompt" placeholder="Once upon a time"></textarea>
 <div id="controls">
   <label>temperature <input type="range" id="temp" min="0" max="2" step="0.05" value="0.8"><span class="val" id="temp-val">0.8</span></label>
@@ -387,39 +428,47 @@ document.getElementById('prompt').addEventListener('keydown', e => {
 </script>
 </body>
 </html>"""
+BASE_HTML = BASE_HTML.replace("</body>", _footer_html + "\n</body>")
 
 CHAT_HTML = """<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>autoresearch · chat</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, sans-serif; background: #0d0d0d; color: #e0e0e0;
+  body { font-family: system-ui, sans-serif; background: #080808; color: #e8e8e8;
          display: flex; flex-direction: column; height: 100vh; max-width: 760px; margin: 0 auto; }
-  #header { padding: 12px 16px; border-bottom: 1px solid #222; font-size: 0.85rem; color: #555; }
-  #header span { color: #888; }
+  #header { padding: 12px 16px; border-bottom: 1px solid #1e1e1e; font-size: 0.85rem; color: #444; display: flex; align-items: center; justify-content: space-between; }
+  #header span { color: #777; }
+  #header a { color: #4a9eff; text-decoration: none; font-size: 0.8rem; }
+  #header a:hover { color: #76baff; }
   #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
-  .user { align-self: flex-end; background: #1a4a7a; color: #e8f0fe; border-radius: 12px 12px 2px 12px; }
-  .assistant { align-self: flex-start; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 12px 12px 12px 2px; }
-  .assistant.thinking { color: #555; font-style: italic; }
-  #footer { padding: 12px 16px; border-top: 1px solid #222; display: flex; gap: 8px; }
-  #input { flex: 1; background: #1a1a1a; color: #e0e0e0; border: 1px solid #333;
-           padding: 10px 14px; border-radius: 8px; font-family: inherit; font-size: 0.9rem;
-           resize: none; height: 44px; max-height: 160px; overflow-y: auto; }
-  #send { background: #1a4a7a; color: #fff; border: none; padding: 10px 18px;
-          border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
-  #send:hover { background: #225d99; }
-  #send:disabled { opacity: 0.4; cursor: default; }
-  #controls { padding: 4px 16px 8px; display: flex; gap: 16px; }
-  label { font-size: 0.75rem; color: #555; }
-  input[type=range] { width: 80px; vertical-align: middle; }
-  span.val { font-size: 0.75rem; color: #888; }
+  .msg { max-width: 80%; padding: 10px 14px; border-radius: 2px; font-size: 0.9rem; line-height: 1.55; white-space: pre-wrap; }
+  .user { align-self: flex-end; background: #1a4a8a; color: #ddeeff; border-radius: 2px; }
+  .assistant { align-self: flex-start; background: #111; border: 1px solid #222; color: #d8d8d8; border-radius: 2px; }
+  .assistant.thinking { color: #444; font-style: italic; }
+  #footer { padding: 10px 16px; border-top: 1px solid #1e1e1e; display: flex; gap: 8px; align-items: flex-end; }
+  #input { flex: 1; background: #111; color: #e8e8e8; border: 1px solid #2a2a2a;
+           padding: 10px 14px; border-radius: 2px; font-family: inherit; font-size: 0.9rem;
+           resize: none; height: 44px; max-height: 160px; overflow-y: auto; outline: none; }
+  #input:focus { border-color: #3a6aaa; }
+  #send { background: #1a4a8a; color: #fff; border: none; width: 44px; height: 44px;
+          border-radius: 2px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  #send:hover { background: #2060b0; }
+  #send:disabled { opacity: 0.3; cursor: default; }
+  #controls { padding: 4px 16px 6px; display: flex; gap: 16px; border-top: 1px solid #111; }
+  label { font-size: 0.72rem; color: #444; }
+  input[type=range] { width: 80px; vertical-align: middle; accent-color: #4a9eff; }
+  span.val { font-size: 0.72rem; color: #666; }
+  #minfo { font-size: 0.7rem; color: #333; padding: 5px 16px 8px; flex-shrink: 0; }
+  #minfo a { color: #4a9eff; text-decoration: none; }
+  #minfo a:hover { color: #76baff; }
 </style>
 </head>
 <body>
-<div id="header">autoresearch · <span>SFT chat model</span> · small model, be patient with it</div>
+<div id="header"><span>autoresearch · SFT chat</span> · small model, be patient<a href="/blog">training log →</a></div>
 <div id="messages"></div>
 <div id="controls">
   <label>temp <input type="range" id="temp" min="0" max="2" step="0.05" value="0.7"><span class="val" id="temp-val">0.7</span></label>
@@ -428,7 +477,7 @@ CHAT_HTML = """<!DOCTYPE html>
 </div>
 <div id="footer">
   <textarea id="input" placeholder="Ask something..." rows="1"></textarea>
-  <button id="send" onclick="sendMsg()">Send</button>
+  <button id="send" onclick="sendMsg()">↑</button>
 </div>
 <script>
 let history = [];
@@ -488,6 +537,7 @@ document.getElementById('input').addEventListener('keydown', e => {
 </script>
 </body>
 </html>"""
+CHAT_HTML = CHAT_HTML.replace("</body>", _footer_html + "\n</body>")
 
 
 def make_stream(prompt_tokens, max_tokens, temperature, top_k, stop_token=None, repetition_penalty=1.3):
@@ -508,6 +558,61 @@ def make_stream(prompt_tokens, max_tokens, temperature, top_k, stop_token=None, 
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return CHAT_HTML if args.sft else BASE_HTML
+
+
+@app.get("/blog", response_class=HTMLResponse)
+async def blog():
+    blog_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "blog.md")
+    if not os.path.exists(blog_path):
+        return HTMLResponse("<p>No blog yet.</p>", status_code=404)
+    with open(blog_path) as _f:
+        md_text = _f.read()
+    # Simple markdown → HTML: headers, paragraphs, horizontal rules, bold, blockquotes
+    import re
+    lines = md_text.split("\n")
+    html_lines = []
+    for line in lines:
+        if line.startswith("### "):
+            html_lines.append(f"<h3>{line[4:]}</h3>")
+        elif line.startswith("## "):
+            html_lines.append(f"<h2>{line[3:]}</h2>")
+        elif line.startswith("# "):
+            html_lines.append(f"<h1>{line[2:]}</h1>")
+        elif line.startswith("---"):
+            html_lines.append("<hr>")
+        elif line.startswith("> "):
+            html_lines.append(f"<blockquote>{line[2:]}</blockquote>")
+        elif line.strip() == "":
+            html_lines.append("<br>")
+        else:
+            # Bold
+            line = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", line)
+            html_lines.append(f"<p>{line}</p>")
+    body = "\n".join(html_lines)
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>autoresearch · training log</title>
+<style>
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{ font-family: monospace; background: #0d0d0d; color: #c8c8c8; padding: 32px 24px; max-width: 780px; margin: 0 auto; line-height: 1.7; }}
+  h1 {{ font-size: 1.2rem; color: #aaa; margin: 16px 0 8px; }}
+  h2 {{ font-size: 1.0rem; color: #888; margin: 24px 0 6px; border-left: 3px solid #333; padding-left: 10px; }}
+  h3 {{ font-size: 0.9rem; color: #777; margin: 12px 0 4px; }}
+  p {{ font-size: 0.85rem; color: #999; margin: 2px 0; }}
+  blockquote {{ font-size: 0.85rem; color: #bbb; background: #141414; border-left: 3px solid #2a6; padding: 10px 14px; margin: 8px 0; border-radius: 4px; font-style: italic; }}
+  hr {{ border: none; border-top: 1px solid #222; margin: 16px 0; }}
+  strong {{ color: #ccc; }}
+  a.back {{ display: inline-block; margin-bottom: 24px; font-size: 0.8rem; color: #555; text-decoration: none; }}
+  a.back:hover {{ color: #999; }}
+</style>
+</head>
+<body>
+<a class="back" href="/">← back to chat</a>
+{body}
+</body>
+</html>"""
 
 
 @app.get("/generate")

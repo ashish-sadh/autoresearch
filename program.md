@@ -2,33 +2,36 @@
 
 This is an experiment to have the LLM do its own research.
 
-## Setup
+## Starting up
 
-To set up a new experiment, work with the user to:
+**Fresh start (no prior work on this branch):**
 
-1. **Agree on a run tag**: propose a tag based on today's date (e.g. `mar5`). The branch `autoresearch/<tag>` must not already exist — this is a fresh run.
-2. **Create the branch**: `git checkout -b autoresearch/<tag>` from current master.
-3. **Read the in-scope files**: The repo is small. Read these files for full context:
-   - `README.md` — repository context.
-   - `prepare.py` — fixed constants, data prep, tokenizer, dataloader, evaluation. Do not modify.
-   - `train.py` — the file you modify. Model architecture, optimizer, training loop.
-4. **Verify data exists**: Check that `~/.cache/autoresearch/` contains data shards and a tokenizer. If not, tell the human to run `uv run prepare.py`.
-5. **Initialize results.tsv**: Create `results.tsv` with just the header row. The baseline will be recorded after the first run.
-6. **Confirm and go**: Confirm setup looks good.
+1. Read `README.md`, `prepare.py`, `train.py` for full context.
+2. Verify data: `~/.cache/autoresearch/` must have shards + tokenizer. If not, tell the human to run `uv run prepare.py`.
+3. Create `results.tsv` with just the header row.
+4. Run the baseline: `uv run train.py > run.log 2>&1`
+5. Record baseline in `results.tsv` with status `keep`.
+6. Trigger the first deep-train (see Deep-train section).
+7. Start the explore loop.
 
-Once you get confirmation, kick off the experimentation.
+**Recovery (session interrupted mid-run):**
+
+- *Mid 5-min loop run*: just re-run `uv run train.py > run.log 2>&1`. The loop never saves resume checkpoints, so no cleanup needed.
+- *Mid deep-train (1h run)*: Check how far it got with `grep "^\[ckpt\]" deeptrain_accum.log | tail -1`. Resume the remaining time: `uv run train.py --time <remaining_seconds> --resume --ckpt-name deeptrain_accum --depth 24 > deeptrain_accum.log 2>&1`.
+- *Mid SFT*: re-run `uv run sft.py --base-checkpoint $ACCUM_CKPT > sft.log 2>&1`.
 
 ## Experimentation
 
 Each experiment runs on a single GPU. The training script runs for a **fixed time budget of 5 minutes** (wall clock training time, excluding startup/compilation). You launch it simply as: `uv run train.py`.
 
-The time budget can be overridden with `--time` (in seconds) but **never do this in the loop** — always use the default 5 minutes so experiments are comparable. The `--time` flag is for the human to do hands-on or overnight runs after the loop finishes.
+The time budget can be overridden with `--time` (in seconds) but **never do this in the loop** — always use the default 5 minutes so experiments are comparable. The `--time` flag is for deep-train and hands-on runs.
 
 **What you CAN do:**
 - Modify `train.py` — this is the only file you edit. Everything is fair game: model architecture, optimizer, hyperparameters, training loop, batch size, model size, etc.
 
 **What you CANNOT do:**
 - Modify `prepare.py`. It is read-only. It contains the fixed evaluation, data loading, tokenizer, and training constants (time budget, sequence length, etc).
+- Modify `chat_web.py`. It is infrastructure — do not touch it. The human maintains it separately.
 - Install new packages or add dependencies. You can only use what's already in `pyproject.toml`.
 - Modify the evaluation harness. The `evaluate_bpb` function in `prepare.py` is the ground truth metric.
 
@@ -39,6 +42,8 @@ The time budget can be overridden with `--time` (in seconds) but **never do this
 **Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. Conversely, removing something and getting equal or better results is a great outcome — that's a simplification win. When evaluating whether to keep a change, weigh the complexity cost against the improvement magnitude. A 0.001 val_bpb improvement that adds 20 lines of hacky code? Probably not worth it. A 0.001 val_bpb improvement from deleting code? Definitely keep. An improvement of ~0 but much simpler code? Keep.
 
 **The first run**: Your very first run should always be to establish the baseline, so you will run the training script as is.
+
+**Starting DEPTH**: `DEPTH = 4` in `train.py` is just a starting point. You are free to experiment with other depths as part of the explore loop.
 
 ## Output format
 
@@ -117,106 +122,96 @@ As an example use case, a user might leave you running while they sleep. If each
 
 ## Deep-train: longer pretraining every 5 improvements
 
-After every **5 `keep` entries** in `results.tsv`, trigger a deep-train sequence. This takes the current best model and trains it for 1 full hour, producing two checkpoints. Do this **in addition to** the regular loop — do not pause normal experiments for it; run the deep-train, then resume the loop immediately after.
+After every **5 `keep` entries** in `results.tsv`, trigger a deep-train sequence. The deep-train always runs at **depth=24** (~400M params), independently of whatever depth the explore loop is currently using. Use `--depth 24` to override without modifying `train.py`.
 
-### Paths (resolve DEPTH from `grep "^DEPTH" train.py`)
+Do this **in addition to** the regular loop — run the deep-train, then resume the loop immediately after.
 
-```
-BEST_MODEL=~/.cache/autoresearch/checkpoints/d{DEPTH}/best_model.pt
-RESUME_DIR=~/.cache/autoresearch/checkpoints/resume
-SFT_DIR=~/.cache/autoresearch/checkpoints/d{DEPTH}_sft
-FRESH_CKPT=$RESUME_DIR/deeptrain_fresh_d{DEPTH}.pt
-ACCUM_CKPT=$RESUME_DIR/deeptrain_accum_d{DEPTH}.pt
-```
-
-Determine the trigger index (1-based count of how many deep-trains have run so far for this depth):
+### Paths
 
 ```bash
-N=$(ls $RESUME_DIR/deeptrain_accum_d{DEPTH}_v*.pt 2>/dev/null | wc -l)
-N=$((N + 1))
-VER=$(printf "%03d" $N)   # e.g. 001, 002, 003...
+DEEP_DEPTH=24
+ACCUM_CKPT=~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d${DEEP_DEPTH}.pt
+SFT_DIR=~/.cache/autoresearch/checkpoints/d${DEEP_DEPTH}_sft
 
-# Helper to extract accumulated hours from a checkpoint
 hours() { python3 -c "import torch; c=torch.load('$1',map_location='cpu',weights_only=False); print(f\"{c.get('accumulated_training_seconds',3600)/3600:.1f}h\")" 2>/dev/null || echo "1.0h"; }
+
+N=$(ls ~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d${DEEP_DEPTH}_v*.pt 2>/dev/null | wc -l)
+N=$((N + 1))
+VER=$(printf "%03d" $N)
 ```
 
-### Step 1 — Fresh checkpoint (always)
+### Step 1 — Accumulated pretraining checkpoint
 
-Start from the loop's current best model weights with a fresh optimizer. This always reflects the latest architecture:
-
-```bash
-uv run train.py --time 3600 --init-from $BEST_MODEL --ckpt-name deeptrain_fresh > deeptrain_fresh.log 2>&1
-# Version it — include accumulated hours in filename
-cp $FRESH_CKPT $RESUME_DIR/deeptrain_fresh_d{DEPTH}_v$VER_$(hours $FRESH_CKPT).pt
-```
-
-Read result: `grep "^val_bpb:" deeptrain_fresh.log`
-
-### Step 2 — Accumulated checkpoint (cumulative pretraining)
+Weights from the explore loop (depth=4) cannot transfer to depth=24 (different tensor shapes). The accum checkpoint is the deep-train's own cumulative record at depth=24.
 
 Check whether the accum checkpoint exists and has a compatible architecture:
 
 ```python
-import torch, os
-ACCUM_CKPT = os.path.expanduser("~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d{DEPTH}.pt")
+import torch, os, json, sys
+sys.path.insert(0, '.')
+from train import build_model_config, GPTConfig, ASPECT_RATIO, HEAD_DIM, WINDOW_PATTERN
+from prepare import MAX_SEQ_LEN
+from tokenizers import Tokenizer as HFTokenizer
+import pickle
+
+ACCUM_CKPT = os.path.expanduser("~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d24.pt")
+CACHE_DIR = os.path.expanduser("~/.cache/autoresearch")
+with open(os.path.join(CACHE_DIR, "tokenizer", "tokenizer.pkl"), "rb") as f:
+    enc = pickle.load(f)
+vocab_size = enc.n_vocab
+
+current_cfg = build_model_config(24)  # uses current train.py constants
+
 if os.path.exists(ACCUM_CKPT):
     ckpt = torch.load(ACCUM_CKPT, map_location='cpu', weights_only=False)
     saved_cfg = ckpt.get('model_config', {})
-    # compare saved_cfg with current GPTConfig built from train.py constants
-    # compatible if all fields match
+    from dataclasses import asdict
+    compatible = (saved_cfg == asdict(current_cfg))
+    print("Compatible" if compatible else f"Incompatible:\n  saved:   {saved_cfg}\n  current: {asdict(current_cfg)}")
+else:
+    print("No accum checkpoint — will start fresh")
 ```
 
 - **Compatible (same arch)**: resume and add 1 more hour on top:
   ```bash
-  uv run train.py --time 3600 --resume --ckpt-name deeptrain_accum > deeptrain_accum.log 2>&1
+  uv run train.py --time 3600 --resume --ckpt-name deeptrain_accum --depth 24 > deeptrain_accum.log 2>&1
   ```
-- **Incompatible or doesn't exist**: arch changed, train from scratch for 1 hour (accum resets for new arch):
+- **Incompatible or doesn't exist**: arch changed or first run — train from scratch:
   ```bash
-  uv run train.py --time 3600 --ckpt-name deeptrain_accum > deeptrain_accum.log 2>&1
+  uv run train.py --time 3600 --ckpt-name deeptrain_accum --depth 24 > deeptrain_accum.log 2>&1
   ```
 
 After the run, version it:
 ```bash
-cp $ACCUM_CKPT $RESUME_DIR/deeptrain_accum_d{DEPTH}_v$VER_$(hours $ACCUM_CKPT).pt
+cp $ACCUM_CKPT ~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d${DEEP_DEPTH}_v${VER}_$(hours $ACCUM_CKPT).pt
 ```
 
 Read result: `grep "^val_bpb:" deeptrain_accum.log`
 
-The accum checkpoint tracks `accumulated_training_seconds` across sessions — each run adds 1 hour. Over time this gives you 1h, 2h, 3h, ... of continuous pretraining on the best architecture found so far.
+The accum checkpoint tracks `accumulated_training_seconds` across sessions — each run adds 1 hour. The dataloader fast-forwards on resume so it always sees new data.
 
-### Step 3 — SFT on the accum checkpoint
-
-The accum checkpoint is a base (completion) model. Run SFT to make it chat-capable before serving:
+### Step 2 — SFT on the accum checkpoint
 
 ```bash
 uv run sft.py --base-checkpoint $ACCUM_CKPT > sft.log 2>&1
-# Version the SFT output — inherit hours from the accum it was built on
-ACCUM_HOURS=$(hours $ACCUM_CKPT)
-cp $SFT_DIR/best_model.pt $SFT_DIR/model_v${VER}_${ACCUM_HOURS}.pt
-cp $SFT_DIR/best_meta.json $SFT_DIR/meta_v${VER}_${ACCUM_HOURS}.json
 ```
 
-This fine-tunes on SmolTalk instruction data and saves the result to `d{DEPTH}_sft/best_model.pt` — the same path that `chat_web.py --sft` auto-detects.
+`sft.py` automatically versions the output:
+- `d24_sft/best_model.pt` — always the latest (what `chat_web.py --sft` loads)
+- `d24_sft/model_v001_1.0h.pt`, `meta_v001_1.0h.json` — versioned copies
 
 Read result: `tail -5 sft.log`
 
-### Step 4 — Serve via UI + ngrok
-
-After SFT completes, update the live UI:
+### Step 3 — Serve via UI + ngrok
 
 ```bash
-# Kill any existing server
 pkill -f "chat_web.py" 2>/dev/null; sleep 1
-
-# Start the chat UI in the background (--sft loads the freshly SFT'd deep-train model)
 uv run chat_web.py --sft > chat_web.log 2>&1 &
 
-# Start ngrok tunnel (requires ngrok CLI to be installed)
 pkill -f "ngrok" 2>/dev/null; sleep 1
 ngrok http 8000 > ngrok.log 2>&1 &
 sleep 4
 
-# Print the public URL
 python3 -c "
 import urllib.request, json
 try:
@@ -228,14 +223,38 @@ except Exception as e:
 "
 ```
 
+### Step 4 — Write a blog entry
+
+Append a dated entry to `blog.md`:
+
+```markdown
+## #N · YYYY-MM-DD · Xh accumulated pretraining
+
+**val_bpb**: X.XXXXXX · **model**: depth=24 · ~400M params
+
+**Last 5 improvements**: [one sentence each describing the 5 keep experiments that triggered this deep-train]
+
+**Q: [interesting prompt]**
+> [model's actual response — copy verbatim from the chat UI]
+```
+
 ### Log deep-train results
 
-Log all three runs to `results.tsv` with status `deep-train`:
+Log both runs to `results.tsv` with status `deep-train`:
 
 ```
-<commit>	<val_bpb>	<memory_gb>	deep-train	1h fresh from loop best (d{DEPTH})
-<commit>	<val_bpb>	<memory_gb>	deep-train	{N}h accum pretraining (d{DEPTH})
-<commit>	0.000000	0.0	deep-train	SFT on {N}h accum checkpoint → chat UI live
+<commit>	<val_bpb>	<memory_gb>	deep-train	Xh accum pretraining (d24)
+<commit>	0.000000	0.0	deep-train	SFT on Xh accum checkpoint → chat UI live
 ```
 
-Use the current git HEAD commit hash (the deep-train doesn't modify `train.py`, so no new commit is needed). For the SFT row, val_bpb is not applicable so log 0.
+Use the current git HEAD commit hash. For the SFT row, val_bpb is not applicable so log 0.
+
+### 45-hour deep-train (after 50 keep entries)
+
+After **50 `keep` entries** total in `results.tsv`, run a single 45-hour deep-train:
+
+```bash
+uv run train.py --time 162000 --resume --ckpt-name deeptrain_accum --depth 24 > deeptrain_long.log 2>&1
+```
+
+This resumes from the existing accum checkpoint and adds 45 hours on top. The dataloader fast-forwards automatically. After it completes, run SFT and update the UI as usual.

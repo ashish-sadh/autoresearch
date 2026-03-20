@@ -28,6 +28,7 @@ _parser.add_argument("--resume", action="store_true", help="Resume from named ch
 _parser.add_argument("--ckpt-name", type=str, default="latest", help="Checkpoint name prefix; file saved as NAME_dDEPTH.pt (default: latest)")
 _parser.add_argument("--init-from", type=str, default=None, help="Init model weights from .pt file, fresh optimizer (mutually exclusive with --resume)")
 _parser.add_argument("--ckpt-interval", type=int, default=300, help="Save resume checkpoint every N seconds of training time (default: 300)")
+_parser.add_argument("--depth", type=int, default=None, help="Override DEPTH (for deep-train at d=24 without modifying the file)")
 _args, _ = _parser.parse_known_args()
 
 def verify_macos_env():
@@ -516,7 +517,8 @@ WARMDOWN_RATIO = 0.3    # fraction of time budget for LR warmdown (longer for fe
 FINAL_LR_FRAC = 0.01    # small non-zero final LR (avoids over-decaying at end)
 
 # Model size
-DEPTH = 4               # explore loop depth
+DEPTH = 4               # explore loop starting point (agent may change this)
+_effective_depth = _args.depth if _args.depth is not None else DEPTH
 DEVICE_BATCH_SIZE = 16  # per-device batch size (restore to 16 for 2^15 batch)
 
 # ---------------------------------------------------------------------------
@@ -558,7 +560,7 @@ def build_model_config(depth):
         window_pattern=WINDOW_PATTERN,
     )
 
-config = build_model_config(DEPTH)
+config = build_model_config(_effective_depth)
 print(f"Model config: {asdict(config)}")
 
 with torch.device("meta"):
@@ -592,7 +594,7 @@ optimizer = model.setup_optimizer(
 # ---------------------------------------------------------------------------
 
 RESUME_CKPT_DIR = os.path.join(os.path.expanduser("~"), ".cache", "autoresearch", "checkpoints", "resume")
-_resume_ckpt_path = os.path.join(RESUME_CKPT_DIR, f"{_args.ckpt_name}_d{DEPTH}.pt")
+_resume_ckpt_path = os.path.join(RESUME_CKPT_DIR, f"{_args.ckpt_name}_d{_effective_depth}.pt")
 _use_checkpointing = _args.time is not None  # never checkpoint 5-min loop runs
 
 if _args.resume and _args.init_from:
@@ -635,6 +637,11 @@ if device_type == "cuda":
     model = torch.compile(model, dynamic=False)
 
 train_loader = make_dataloader(tokenizer, DEVICE_BATCH_SIZE, MAX_SEQ_LEN, "train")
+if _resumed_step > 0:
+    _skip = _resumed_step * grad_accum_steps
+    print(f"Fast-forwarding dataloader by {_skip} batches to avoid repeating data...")
+    for _ in range(_skip):
+        next(train_loader)
 x, y, epoch = next(train_loader)  # prefetch first batch
 
 # Clear any stale MPS cache before training begins
@@ -805,13 +812,13 @@ print(f"mfu_percent:      {steady_state_mfu:.2f}")
 print(f"total_tokens_M:   {total_tokens / 1e6:.1f}")
 print(f"num_steps:        {step}")
 print(f"num_params_M:     {num_params / 1e6:.1f}")
-print(f"depth:            {DEPTH}")
+print(f"depth:            {_effective_depth}")
 
 # ---------------------------------------------------------------------------
 # Save checkpoint (only if this run is the best so far)
 # ---------------------------------------------------------------------------
 
-CHECKPOINT_DIR = os.path.join(os.path.expanduser("~"), ".cache", "autoresearch", "checkpoints", f"d{DEPTH}")
+CHECKPOINT_DIR = os.path.join(os.path.expanduser("~"), ".cache", "autoresearch", "checkpoints", f"d{_effective_depth}")
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
 best_bpb_path = os.path.join(CHECKPOINT_DIR, "best_val_bpb.txt")

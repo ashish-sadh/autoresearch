@@ -481,8 +481,21 @@ print("\nTraining complete.")
 model.eval()
 model_state = {k: v.float() if v.dtype == torch.bfloat16 else v for k, v in model.state_dict().items()}
 
+# Determine accumulated pretraining hours from the base checkpoint
+_accum_hours = 0.0
+if args.base_checkpoint:
+    _accum_hours = _ckpt_meta.get("accumulated_training_seconds", 0) / 3600
+
+# Auto-version: count existing versioned model files to pick next version number
+_existing_versions = [f for f in os.listdir(SFT_CKPT_DIR) if f.startswith("model_v") and f.endswith(".pt")]
+_ver_n = len(_existing_versions) + 1
+_ver_str = f"v{_ver_n:03d}"
+_hours_str = f"{_accum_hours:.1f}h"
+
 model_path = os.path.join(SFT_CKPT_DIR, "best_model.pt")
 torch.save(model_state, model_path)
+versioned_model_path = os.path.join(SFT_CKPT_DIR, f"model_{_ver_str}_{_hours_str}.pt")
+torch.save(model_state, versioned_model_path)
 
 sft_meta = {
     "step": step,
@@ -491,12 +504,18 @@ sft_meta = {
     "model_config": asdict(config),
     "vocab_size": enc.n_vocab,
     "sft_steps": step,
+    "accum_hours": _accum_hours,
+    "version": _ver_str,
 }
 meta_path = os.path.join(SFT_CKPT_DIR, "best_meta.json")
 with open(meta_path, "w") as f:
     json.dump(sft_meta, f, indent=2)
+versioned_meta_path = os.path.join(SFT_CKPT_DIR, f"meta_{_ver_str}_{_hours_str}.json")
+with open(versioned_meta_path, "w") as f:
+    json.dump(sft_meta, f, indent=2)
 
 print(f"\nSaved SFT model → {model_path}")
+print(f"Versioned copy  → {versioned_model_path}")
 print(f"Saved SFT meta  → {meta_path}")
 print(f"\nRun the chat UI with:")
 print(f"  uv run chat_web.py --sft")
