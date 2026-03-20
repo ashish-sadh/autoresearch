@@ -110,3 +110,5 @@ e69e110	1.317789	0.0	keep	Muon momentum warmup 300→200 steps (38% vs 57% of tr
 2a50acd	1.320998	0.0	discard	Muon initial momentum 0.85→0.90 (worse; 0.85→0.95 ramp optimal)
 66e3527	1.316623	0.0	keep	WARMDOWN_RATIO 0.2→0.3 (longer cooldown for fewer total steps; restored from prev session)
 c7fe67c	1.356123	0.0	keep	fresh session d4 baseline (DEPTH 8→4 reset; hyperparams need re-tuning for d4)
+92fcb79	1.138994	0.0	deep-train	1h fresh d24 256-dim; 1962 steps (first d24 deep-train)
+92fcb79	0.000000	0.0	deep-train	SFT on 1h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
