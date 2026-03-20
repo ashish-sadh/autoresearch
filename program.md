@@ -126,7 +126,9 @@ As an example use case, a user might leave you running while they sleep. If each
 
 ## Deep-train: longer pretraining every 5 improvements
 
-After every **5 `keep` entries** in `results.tsv`, trigger a deep-train sequence. The deep-train always runs at **depth=24** (~400M params), independently of whatever depth the explore loop is currently using. Use `--depth 24` to override without modifying `train.py`.
+After every **5 `keep` entries** in `results.tsv`, trigger a deep-train sequence. The deep-train always runs at **depth=24** (~860M params, 1536-dim), independently of whatever depth the explore loop is currently using. Use `--depth 24` to override without modifying `train.py`.
+
+**Trigger check**: At the start of every session and after every `keep`, compute: `K = total keep count`, `D = total deep-train count` (rows with status `deep-train`). If `K // 5 > D`, a deep-train is overdue — run it before continuing the loop.
 
 Do this **in addition to** the regular loop — run the deep-train, then resume the loop immediately after.
 
@@ -249,7 +251,7 @@ Score each dimension: `worse` / `same` / `better` with one sentence of evidence.
 Append to `blog.md`:
 
 ```markdown
-## #N · YYYY-MM-DD · Xh accumulated pretraining
+## #N · YYYY-MM-DD HH:MM · Xh accumulated pretraining
 
 **val_bpb**: X.XXXXXX · **model**: depth=24 · ~860M params · Xh pretraining
 

@@ -614,55 +614,163 @@ async def root():
 
 @app.get("/blog", response_class=HTMLResponse)
 async def blog():
+    import re
     blog_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "blog.md")
     if not os.path.exists(blog_path):
         return HTMLResponse("<p>No blog yet.</p>", status_code=404)
     with open(blog_path) as _f:
         md_text = _f.read()
-    # Simple markdown → HTML: headers, paragraphs, horizontal rules, bold, blockquotes
-    import re
-    lines = md_text.split("\n")
-    html_lines = []
-    for line in lines:
-        if line.startswith("### "):
-            html_lines.append(f"<h3>{line[4:]}</h3>")
-        elif line.startswith("## "):
-            html_lines.append(f"<h2>{line[3:]}</h2>")
-        elif line.startswith("# "):
-            html_lines.append(f"<h1>{line[2:]}</h1>")
-        elif line.startswith("---"):
-            html_lines.append("<hr>")
-        elif line.startswith("> "):
-            html_lines.append(f"<blockquote>{line[2:]}</blockquote>")
-        elif line.strip() == "":
-            html_lines.append("<br>")
+
+    def md_inline(line):
+        line = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", line)
+        line = re.sub(r"\*(.+?)\*", r"<em>\1</em>", line)
+        line = re.sub(r"`(.+?)`", r"<code>\1</code>", line)
+        return line
+
+    def render_block(lines):
+        """Render a list of lines as HTML, handling tables and blockquotes."""
+        out = []
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if line.startswith("### "):
+                out.append(f"<h3>{md_inline(line[4:])}</h3>")
+            elif line.startswith("## "):
+                out.append(f"<h2>{md_inline(line[3:])}</h2>")
+            elif line.startswith("# "):
+                out.append(f"<h1>{md_inline(line[2:])}</h1>")
+            elif line.startswith("---"):
+                pass  # skip HRs inside entries
+            elif line.startswith("> "):
+                out.append(f'<div class="response">{md_inline(line[2:])}</div>')
+            elif line.startswith("|"):
+                # table
+                rows = []
+                while i < len(lines) and lines[i].startswith("|"):
+                    rows.append(lines[i])
+                    i += 1
+                thtml = '<table>'
+                for ri, row in enumerate(rows):
+                    if re.match(r"^\|[-| ]+\|$", row):
+                        continue  # separator row
+                    cells = [c.strip() for c in row.strip("|").split("|")]
+                    tag = "th" if ri == 0 else "td"
+                    thtml += "<tr>" + "".join(f"<{tag}>{md_inline(c)}</{tag}>" for c in cells) + "</tr>"
+                thtml += "</table>"
+                out.append(thtml)
+                continue
+            elif line.strip() == "":
+                pass
+            else:
+                out.append(f"<p>{md_inline(line)}</p>")
+            i += 1
+        return "\n".join(out)
+
+    # Split into: intro (before first ##) and entries (each ## block)
+    parts = re.split(r"^## ", md_text, flags=re.MULTILINE)
+    intro_md = parts[0]
+    entry_mds = parts[1:]  # each starts with the header text
+
+    # Render intro (skip the h1, hr lines cleanly)
+    intro_lines = [l for l in intro_md.split("\n") if not l.startswith("---") and l.strip() != ""]
+    intro_html = render_block(intro_lines)
+
+    # Render entries — newest first
+    entry_htmls = []
+    for idx, entry_md in enumerate(reversed(entry_mds)):
+        entry_lines = entry_md.split("\n")
+        title = md_inline(entry_lines[0].strip())
+        body_lines = entry_lines[1:]
+
+        # Split body into main content and benchmark responses section
+        bench_start = next((i for i, l in enumerate(body_lines) if "Benchmark responses" in l), None)
+        if bench_start is not None:
+            main_lines = body_lines[:bench_start]
+            bench_lines = body_lines[bench_start:]
+            bench_html = render_block(bench_lines)
+            bench_section = f'<details class="bench"><summary>benchmark responses ▾</summary><div class="bench-body">{bench_html}</div></details>'
         else:
-            # Bold
-            line = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", line)
-            html_lines.append(f"<p>{line}</p>")
-    body = "\n".join(html_lines)
+            main_lines = body_lines
+            bench_section = ""
+
+        main_html = render_block(main_lines)
+        is_newest = (idx == 0)
+        open_attr = " open" if is_newest else ""
+        entry_htmls.append(
+            f'<details class="entry"{open_attr}>'
+            f'<summary class="entry-title">## {title}</summary>'
+            f'<div class="entry-body">{main_html}{bench_section}</div>'
+            f'</details>'
+        )
+
+    entries_html = "\n".join(entry_htmls)
+
     return f"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>autoresearch · training log</title>
 <style>
-  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ font-family: monospace; background: #0d0d0d; color: #c8c8c8; padding: 32px 24px; max-width: 780px; margin: 0 auto; line-height: 1.7; }}
-  h1 {{ font-size: 1.2rem; color: #aaa; margin: 16px 0 8px; }}
-  h2 {{ font-size: 1.0rem; color: #888; margin: 24px 0 6px; border-left: 3px solid #333; padding-left: 10px; }}
-  h3 {{ font-size: 0.9rem; color: #777; margin: 12px 0 4px; }}
-  p {{ font-size: 0.85rem; color: #999; margin: 2px 0; }}
-  blockquote {{ font-size: 0.85rem; color: #bbb; background: #141414; border-left: 3px solid #2a6; padding: 10px 14px; margin: 8px 0; border-radius: 4px; font-style: italic; }}
-  hr {{ border: none; border-top: 1px solid #222; margin: 16px 0; }}
-  strong {{ color: #ccc; }}
-  a.back {{ display: inline-block; margin-bottom: 24px; font-size: 0.8rem; color: #555; text-decoration: none; }}
-  a.back:hover {{ color: #999; }}
+  *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+          background: #09090b; color: #d4d4d8; padding: 24px 16px 48px;
+          max-width: 740px; margin: 0 auto; line-height: 1.7; font-size: 0.9rem; }}
+  a.back {{ display: inline-block; margin-bottom: 20px; font-size: 0.78rem; color: #5b8ff4;
+            text-decoration: none; }}
+  a.back:hover {{ color: #88aaff; }}
+  .intro {{ margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid #1f1f23; }}
+  .intro h1 {{ font-size: 1.1rem; color: #f0f0f2; margin-bottom: 8px; font-weight: 600; }}
+  .intro p {{ color: #71717a; font-size: 0.83rem; margin: 3px 0; }}
+  .intro strong {{ color: #a1a1aa; }}
+
+  /* Entry accordion */
+  details.entry {{ border: 1px solid #1f1f23; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }}
+  details.entry[open] {{ border-color: #2a2a35; }}
+  summary.entry-title {{
+    list-style: none; cursor: pointer; padding: 13px 16px;
+    font-size: 0.85rem; font-weight: 600; color: #a1a1aa;
+    background: #111113; user-select: none;
+    display: flex; align-items: center; gap: 8px;
+  }}
+  summary.entry-title::-webkit-details-marker {{ display: none; }}
+  details.entry[open] summary.entry-title {{ color: #f0f0f2; border-bottom: 1px solid #1f1f23; }}
+  summary.entry-title::before {{ content: "▶"; font-size: 0.6rem; color: #3f3f46; transition: transform 0.2s; }}
+  details.entry[open] summary.entry-title::before {{ transform: rotate(90deg); color: #5b8ff4; }}
+
+  .entry-body {{ padding: 16px; }}
+  .entry-body h3 {{ font-size: 0.78rem; font-weight: 600; color: #71717a; text-transform: uppercase;
+                    letter-spacing: 0.05em; margin: 14px 0 6px; }}
+  .entry-body p {{ color: #a1a1aa; font-size: 0.85rem; margin: 4px 0; }}
+  .entry-body strong {{ color: #d4d4d8; }}
+  .entry-body em {{ color: #71717a; }}
+  .entry-body code {{ font-family: monospace; font-size: 0.8rem; background: #1a1a1f; padding: 1px 5px; border-radius: 3px; color: #a0c8ff; }}
+
+  /* Table (quality assessment) */
+  table {{ width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.82rem; }}
+  th {{ text-align: left; color: #71717a; font-weight: 600; padding: 6px 10px;
+        border-bottom: 1px solid #2a2a35; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }}
+  td {{ padding: 7px 10px; border-bottom: 1px solid #1a1a1f; color: #a1a1aa; vertical-align: top; }}
+  tr:last-child td {{ border-bottom: none; }}
+
+  /* Benchmark responses nested accordion */
+  details.bench {{ margin-top: 14px; border: 1px solid #1a1a1f; border-radius: 6px; overflow: hidden; }}
+  details.bench summary {{ list-style: none; cursor: pointer; padding: 9px 14px;
+    font-size: 0.75rem; color: #3f3f46; background: #0d0d0f; user-select: none; }}
+  details.bench summary::-webkit-details-marker {{ display: none; }}
+  details.bench[open] summary {{ color: #71717a; border-bottom: 1px solid #1a1a1f; }}
+  .bench-body {{ padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }}
+  .response {{ font-size: 0.82rem; color: #71717a; background: #0d0d0f; border-left: 2px solid #2a2a35;
+               padding: 8px 12px; border-radius: 0 4px 4px 0; white-space: pre-wrap; word-break: break-word;
+               font-style: italic; line-height: 1.6; }}
+  .bench-body p {{ font-size: 0.8rem; color: #52525b; margin: 0; }}
+  .bench-body em {{ color: #3f3f46; }}
 </style>
 </head>
 <body>
 <a class="back" href="/">← back to chat</a>
-{body}
+<div class="intro">{intro_html}</div>
+{entries_html}
 </body>
 </html>"""
 

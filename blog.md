@@ -16,7 +16,7 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ---
 
-## #1 · 2026-03-20 · 1.0h accumulated pretraining
+## #1 · 2026-03-20 12:00 · 1.0h accumulated pretraining
 
 **val_bpb**: 1.138994 · **model**: depth=24, 256-dim · ~52M params *(note: early run used small architecture; future runs scale to 1536-dim ~860M params)*
 
