@@ -292,7 +292,7 @@ _footer_html = (
     f'depth {config.n_layer} · {_num_params/1e6:.1f}M params'
     f' · {_tokens_seen/1e9:.2f}B tokens · {_accum_hours:.1f}h pretraining'
     f' · <a href="/blog" style="color:#4a9eff;text-decoration:none">training log →</a>'
-    f' · powered by Ashish\'s Mac'
+    f' · powered by M5 Max · 64GB'
     f'</div>'
 )
 
