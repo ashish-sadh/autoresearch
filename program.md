@@ -98,6 +98,8 @@ d4e5f6g	0.000000	0.0	crash	double model width (OOM)
 
 The experiment runs on a dedicated branch (e.g. `autoresearch/mar5` or `autoresearch/mar5-gpu0`).
 
+**IMPORTANT**: Re-read `program.md` before every deep-train and at the start of every new session. The human may update it mid-session with new guidance, parameters, or fixes.
+
 LOOP FOREVER:
 
 1. Look at the git state: the current branch/commit we're on
