@@ -178,14 +178,15 @@ else:
     print("No accum checkpoint — will start fresh")
 ```
 
-- **Compatible (same arch)**: resume and add 1 more hour on top. Try `--device-batch-size 16` first; if it OOMs, retry with 8, then 4:
+- **Compatible (same arch)**: resume and add 1 more hour on top:
   ```bash
-  uv run train.py --time 3600 --resume --ckpt-name deeptrain_accum --depth 24 --device-batch-size 16 > deeptrain_accum.log 2>&1
+  uv run train.py --time 3600 --resume --ckpt-name deeptrain_accum --depth 24 --device-batch-size 4 > deeptrain_accum.log 2>&1
   ```
-- **Incompatible or doesn't exist**: arch changed or first run — train from scratch. Same fallback: 16 → 8 → 4:
+- **Incompatible or doesn't exist**: arch changed or first run — train from scratch:
   ```bash
-  uv run train.py --time 3600 --ckpt-name deeptrain_accum --depth 24 --device-batch-size 16 > deeptrain_accum.log 2>&1
+  uv run train.py --time 3600 --ckpt-name deeptrain_accum --depth 24 --device-batch-size 4 > deeptrain_accum.log 2>&1
   ```
+  Note: d=24 (855M params) uses ~62GB with B=4. B=8 and B=16 cause swap thrashing on 64GB hardware.
 
 After the run, version it:
 ```bash
@@ -296,7 +297,7 @@ Use the current git HEAD commit hash. For the SFT row, val_bpb is not applicable
 After **50 `keep` entries** total in `results.tsv`, run a single 45-hour deep-train:
 
 ```bash
-uv run train.py --time 162000 --resume --ckpt-name deeptrain_accum --depth 24 --device-batch-size 16 > deeptrain_long.log 2>&1
+uv run train.py --time 162000 --resume --ckpt-name deeptrain_accum --depth 24 --device-batch-size 4 > deeptrain_long.log 2>&1
 ```
 
 This resumes from the existing accum checkpoint and adds 45 hours on top. The dataloader fast-forwards automatically. After it completes, run SFT and update the UI as usual.
