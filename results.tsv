@@ -107,8 +107,6 @@ e69e110	1.317789	0.0	keep	Muon momentum warmup 300→200 steps (38% vs 57% of tr
 2a50acd	1.320998	0.0	discard	Muon initial momentum 0.85→0.90 (worse; 0.85→0.95 ramp optimal)
 66e3527	1.316623	0.0	keep	WARMDOWN_RATIO 0.2→0.3 (longer cooldown for fewer total steps; restored from prev session)
 c7fe67c	1.356123	0.0	keep	fresh session d4 baseline (DEPTH 8→4 reset; hyperparams need re-tuning for d4)
-92fcb79	1.138994	0.0	deep-train	1h fresh d24 256-dim; 1962 steps (first d24 deep-train)
-92fcb79	0.000000	0.0	deep-train	SFT on 1h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
 4482a97	1.340000	0.0	keep	Exp108: ASPECT_RATIO 32→64 (256-dim 4-layer restore; re-tune for d4 WD=0.0 regime)
 9fdff26	1.335000	0.0	keep	Exp110: MATRIX_LR 0.060→0.065 (probe higher for d4 WD=0.0)
 1d18751	1.330000	0.0	keep	Exp114: WEIGHT_DECAY 0.1→0.0 (small d4 256-dim; no regularization needed)
@@ -121,3 +119,6 @@ de45a9e	1.315501	0.0	keep	Exp139: ve_gate_channels 32→8 (smaller gate; more st
 ec4ace0	1.315745	0.0	discard	Exp141: MATRIX_LR 0.075→0.080 (too high; 0.075 confirmed optimal)
 19c7711	1.307538	0.0	discard	Exp142: EMBEDDING_LR 0.4→0.35 (worse; 0.4 confirmed optimal)
 e98840f	1.316746	0.0	discard	Exp143: SCALAR_LR 2.0→3.0 (worse; 2.0 confirmed optimal; 772 steps)
+ccbd76c	1.336272	0.0	deep-train	1h fresh d16 1024-dim; 468 steps (second deep-train)
+ccbd76c	0.000000	0.0	deep-train	SFT on 1h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
+9b895b5	1.300779	0.0	keep	Exp144: EMBEDDING_LR 0.4→0.45 (probe higher in WD=0.0 regime)

@@ -16,37 +16,7 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ---
 
-## #1 · 2026-03-20 12:00 · 1.0h accumulated pretraining
-
-**val_bpb**: 1.138994 · **model**: depth=24, 256-dim · ~52M params *(note: early run used small architecture; future runs scale to 1536-dim ~860M params)*
-
-**Last 5 improvements**: MATRIX_LR 0.060→0.065 gave marginal gain at d4 256-dim; removing weight decay (WD 0.1→0.0) was a surprisingly large win — small models with short training horizons don't benefit from regularization; EMBEDDING_LR 0.6→0.4 improved further in the no-WD regime; MATRIX_LR 0.065→0.070 confirmed the optimum shifts higher without weight decay; SCALAR_LR 1.0→2.0 squeezed out one more improvement, showing per-layer scalars adapt faster in the unregularized regime.
-
-**Benchmark responses**
-
-*Q: Explain why the sky is blue.*
-> The sky's white and greenish color, while it is darkness. Slowly flowing water into one of two different colors: a deep red (Green), grey or orange. We can see that in the picture above, "melting" is not just about the shadows. This is an evident, but mystical and infamously infamous idea. I am glad we have been using our observations for some time now with the sky's white to blue itself! Here are a few common ways you can create this visual experience: 1. Call "Power": Green or green lines, such as Grey or dark color, often come from other colors like red or yellow. 2. Flowering water: A rainbow of blue and gray can be found in a very vibrant mix, so it is best to try the same size again.
-
-*Q: What is 2 + 2 and why?*
-> The answer to this question can depend on several factors. First, the type of fluid in a system should be considered as "cool" or "when an entire system is connected," because it's more typically used for cooling purposes. To determine if you need extra coolant at home and would like to know what specifications are required or how often you're going to install them, the answer will depend on various factors. 1. Country: The type of fluid in a system should be considered as "cool" or "when an entire system is connected." This means your installation may not always perform like calculating specifications.
-
-*Q: Tell me a short story about a robot who learns to feel.*
-> We have the world's most popular inhabitants, and we know that you can expect a few of these ideas to be quite powerful. This is a great opportunity for learners to explore all aspects of your life and get started with this incredible activity. Here are some interesting stories from our perspective on robotics: 1. Error: This book delves into the world of robots that can provide you with opportunities to engage in activities like reading, playing sports, or engaging in physical activity. 2. Tell me about a new robot with an idea worth it and how they develop their own sense of intellect and motivation.
-
-**Quality assessment** *(baseline — no prior entry to compare)*
-
-| Dimension | Baseline observation |
-|---|---|
-| Grammar | Sentences are individually grammatical but content is pure hallucination |
-| Coherency | None — each sentence contradicts or ignores the previous |
-| Topic follow-through | Zero — all three questions completely ignored; model outputs pseudo-listicle filler |
-| Emerging reasoning | None — no causal structure, no logical steps, no self-reference to the question |
-
-This is the 1h baseline on a small 256-dim 24-layer architecture (~52M params). The model has absorbed enough web-text patterns to produce fluent-looking English with formatting (numbered lists, bold), but has no grounding in meaning. All future entries use the full 1536-dim ~860M param model with progressively more pretraining hours.
-
----
-
-## #2 · 2026-03-20 13:45 · 1.0h accumulated pretraining
+## #1 · 2026-03-20 13:45 · 1.0h accumulated pretraining
 
 **val_bpb**: 1.336272 · **model**: depth=16, 1024-dim · ~285M params · 1h pretraining
 
@@ -63,15 +33,15 @@ This is the 1h baseline on a small 256-dim 24-layer architecture (~52M params). 
 *Q: Tell me a short story about a robot who learns to feel.*
 > The robot is now part of the conversation, and there are several options you can convey or provide. First, let's add some more details for your robot: 1. **Epit**: A robot will be able to control its length, which means that they are designed specifically for a specific number of hours spent. This gives them some time in the process until each one is complete. 2. **Avoid overcrowded or logical**: Consider all that is needed. 3. **Cost For**: A robot will be able to control its length and perform tasks in general, while maintaining an object's positioning speed is essential for keeping the entire body aligned with each other. 4. **Summary**: The robot should transport the distance between a single one and maintains its length, which means that it can be used to track its length.
 
-**Quality assessment vs previous entry**
+**Quality assessment** *(baseline — no prior entry to compare)*
 
-| Dimension | Change | Evidence |
-|---|---|---|
-| Grammar | same | Sentences are individually grammatical but still hallucinated; invented words like "sunscheds" and "browth" appear |
-| Coherency | same | Responses drift randomly — sky answer wanders through colors/skin/hair with no structure |
-| Topic follow-through | same | No question is actually answered; math response produces pseudo-code/LaTeX fragments; robot story becomes a bullet-point spec sheet |
-| Emerging reasoning | same | No causal structure; numbered lists are cosmetic formatting only, not logical steps |
+| Dimension | Baseline observation |
+|---|---|
+| Grammar | Sentences are individually grammatical but hallucinated; invented words like "sunscheds" and "browth" appear |
+| Coherency | None — responses drift randomly, sky answer wanders through colors/skin/hair with no structure |
+| Topic follow-through | Zero — no question is actually answered; math produces pseudo-code/LaTeX fragments; robot story becomes a spec sheet |
+| Emerging reasoning | None — numbered lists are cosmetic formatting only, no causal structure or logical steps |
 
-First deep-train on the new d16 architecture (1024-dim, 285M params). With only 1h of pretraining on a larger model, the val_bpb (1.336) is worse than the smaller d24 model's 1.139 — expected, since larger models need proportionally more data to converge. An interesting new artifact: the model has picked up formatting patterns (bold headers, numbered lists, LaTeX-like fragments, even "tool_call" tokens) from the training data, but applies them nonsensically. Quality should improve as accumulated pretraining hours grow.
+Baseline for the d16 architecture (1024-dim, 285M params) with 1h pretraining. The model has picked up formatting patterns (bold headers, numbered lists, LaTeX-like fragments, even "tool_call" tokens) from the training data, but applies them nonsensically. Quality should improve as accumulated pretraining hours grow.
 
 ---
