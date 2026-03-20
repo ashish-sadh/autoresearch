@@ -45,3 +45,33 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 This is the 1h baseline on a small 256-dim 24-layer architecture (~52M params). The model has absorbed enough web-text patterns to produce fluent-looking English with formatting (numbered lists, bold), but has no grounding in meaning. All future entries use the full 1536-dim ~860M param model with progressively more pretraining hours.
 
 ---
+
+## #2 · 2026-03-20 13:45 · 1.0h accumulated pretraining
+
+**val_bpb**: 1.336272 · **model**: depth=16, 1024-dim · ~285M params · 1h pretraining
+
+**Last 5 improvements**: MATRIX_LR 0.065→0.070 continued the trend of higher LR in the WD=0.0 regime; SCALAR_LR 1.0→2.0 showed per-layer scalars adapt faster without regularization; FINAL_LR_FRAC 0.0→0.01 avoided over-decaying learning rate at training end; ve_gate_channels 32→8 sped up steps enough to offset the smaller gate; MATRIX_LR 0.070→0.075 gave the biggest single improvement in recent history.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The light of darker sunscheds appears to appear as a blue browth blue, which is a delicate blue, green color blue that has been blue, but an red hair gray green green red, where brown. Since bright colors are yellowing, green eyes can be seen on the skin and can be seen in white. But when light changes seem incorrectly close to normal conditions, they may even have blue blue or red. But as darker sunscheds can become green, which is not always known for its blue. As light changes, black skin redness indicates the color of yellow. To avoid this problem, the sky appears white, so it's witnessed that the orange colors are brown or red.
+
+*Q: What is 2 + 2 and why?*
+> To solve this problem, we multiply the two terms: 6.3 - 1 = x-ray bolder The answer is: "tool_call>[{"name": \frac{n}}] Then
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> The robot is now part of the conversation, and there are several options you can convey or provide. First, let's add some more details for your robot: 1. **Epit**: A robot will be able to control its length, which means that they are designed specifically for a specific number of hours spent. This gives them some time in the process until each one is complete. 2. **Avoid overcrowded or logical**: Consider all that is needed. 3. **Cost For**: A robot will be able to control its length and perform tasks in general, while maintaining an object's positioning speed is essential for keeping the entire body aligned with each other. 4. **Summary**: The robot should transport the distance between a single one and maintains its length, which means that it can be used to track its length.
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Sentences are individually grammatical but still hallucinated; invented words like "sunscheds" and "browth" appear |
+| Coherency | same | Responses drift randomly — sky answer wanders through colors/skin/hair with no structure |
+| Topic follow-through | same | No question is actually answered; math response produces pseudo-code/LaTeX fragments; robot story becomes a bullet-point spec sheet |
+| Emerging reasoning | same | No causal structure; numbered lists are cosmetic formatting only, not logical steps |
+
+First deep-train on the new d16 architecture (1024-dim, 285M params). With only 1h of pretraining on a larger model, the val_bpb (1.336) is worse than the smaller d24 model's 1.139 — expected, since larger models need proportionally more data to converge. An interesting new artifact: the model has picked up formatting patterns (bold headers, numbered lists, LaTeX-like fragments, even "tool_call" tokens) from the training data, but applies them nonsensically. Quality should improve as accumulated pretraining hours grow.
+
+---
