@@ -513,7 +513,7 @@ WEIGHT_DECAY = 0.0      # no weight decay (small d4 model may not benefit from r
 ADAM_BETAS = (0.8, 0.95) # Adam beta1, beta2
 WARMUP_RATIO = 0.0      # fraction of time budget for LR warmup
 WARMDOWN_RATIO = 0.3    # fraction of time budget for LR warmdown (longer for fewer total steps)
-FINAL_LR_FRAC = 0.0     # final LR as fraction of initial
+FINAL_LR_FRAC = 0.01    # small non-zero final LR (avoids over-decaying at end)
 
 # Model size
 DEPTH = 4               # explore loop depth
