@@ -29,6 +29,7 @@ _parser.add_argument("--ckpt-name", type=str, default="latest", help="Checkpoint
 _parser.add_argument("--init-from", type=str, default=None, help="Init model weights from .pt file, fresh optimizer (mutually exclusive with --resume)")
 _parser.add_argument("--ckpt-interval", type=int, default=300, help="Save resume checkpoint every N seconds of training time (default: 300)")
 _parser.add_argument("--depth", type=int, default=None, help="Override DEPTH (for deep-train at d=24 without modifying the file)")
+_parser.add_argument("--device-batch-size", type=int, default=None, help="Override DEVICE_BATCH_SIZE (use smaller value for large models to avoid OOM)")
 _args, _ = _parser.parse_known_args()
 
 def verify_macos_env():
@@ -519,7 +520,7 @@ FINAL_LR_FRAC = 0.01    # small non-zero final LR (avoids over-decaying at end)
 # Model size
 DEPTH = 4               # explore loop starting point (agent may change this)
 _effective_depth = _args.depth if _args.depth is not None else DEPTH
-DEVICE_BATCH_SIZE = 16  # per-device batch size (restore to 16 for 2^15 batch)
+DEVICE_BATCH_SIZE = _args.device_batch_size if _args.device_batch_size is not None else 16  # per-device batch size
 
 # ---------------------------------------------------------------------------
 # Setup: tokenizer, model, optimizer, dataloader

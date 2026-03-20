@@ -180,11 +180,11 @@ else:
 
 - **Compatible (same arch)**: resume and add 1 more hour on top:
   ```bash
-  uv run train.py --time 3600 --resume --ckpt-name deeptrain_accum --depth 24 > deeptrain_accum.log 2>&1
+  uv run train.py --time 3600 --resume --ckpt-name deeptrain_accum --depth 24 --device-batch-size 4 > deeptrain_accum.log 2>&1
   ```
 - **Incompatible or doesn't exist**: arch changed or first run — train from scratch:
   ```bash
-  uv run train.py --time 3600 --ckpt-name deeptrain_accum --depth 24 > deeptrain_accum.log 2>&1
+  uv run train.py --time 3600 --ckpt-name deeptrain_accum --depth 24 --device-batch-size 4 > deeptrain_accum.log 2>&1
   ```
 
 After the run, version it:
@@ -296,7 +296,7 @@ Use the current git HEAD commit hash. For the SFT row, val_bpb is not applicable
 After **50 `keep` entries** total in `results.tsv`, run a single 45-hour deep-train:
 
 ```bash
-uv run train.py --time 162000 --resume --ckpt-name deeptrain_accum --depth 24 > deeptrain_long.log 2>&1
+uv run train.py --time 162000 --resume --ckpt-name deeptrain_accum --depth 24 --device-batch-size 4 > deeptrain_long.log 2>&1
 ```
 
 This resumes from the existing accum checkpoint and adds 45 hours on top. The dataloader fast-forwards automatically. After it completes, run SFT and update the UI as usual.
