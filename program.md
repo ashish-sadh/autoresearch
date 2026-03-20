@@ -18,7 +18,7 @@ This is an experiment to have the LLM do its own research.
 
 - *Mid 5-min loop run*: just re-run `uv run train.py > run.log 2>&1`. The loop never saves resume checkpoints, so no cleanup needed.
 - *Mid deep-train (1h run)*: Check how far it got with `grep "^\[ckpt\]" deeptrain_accum.log | tail -1`. Resume the remaining time: `uv run train.py --time <remaining_seconds> --resume --ckpt-name deeptrain_accum --depth 16 > deeptrain_accum.log 2>&1`.
-- *Mid SFT*: re-run `uv run sft.py --base-checkpoint $ACCUM_CKPT > sft.log 2>&1`.
+- *Mid SFT*: re-run `uv run sft.py --base-checkpoint $ACCUM_CKPT --max-steps 500 > sft.log 2>&1`.
 
 ## Experimentation
 
@@ -200,7 +200,7 @@ The accum checkpoint tracks `accumulated_training_seconds` across sessions — e
 ### Step 2 — SFT on the accum checkpoint
 
 ```bash
-uv run sft.py --base-checkpoint $ACCUM_CKPT > sft.log 2>&1
+uv run sft.py --base-checkpoint $ACCUM_CKPT --max-steps 500 > sft.log 2>&1
 ```
 
 `sft.py` automatically versions the output:
