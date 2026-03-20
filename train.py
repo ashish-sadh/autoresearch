@@ -505,7 +505,7 @@ WINDOW_PATTERN = "L"    # sliding window pattern: L=full, S=full
 
 # Optimization
 TOTAL_BATCH_SIZE = 2**15 # ~32K tokens per optimizer step (DEPTH-4 style; may give better gradient signal)
-EMBEDDING_LR = 0.6      # learning rate for token embeddings (Adam)
+EMBEDDING_LR = 0.4      # learning rate for token embeddings (re-tune for no-WD regime)
 UNEMBEDDING_LR = 0.02   # learning rate for lm_head (Muon)
 MATRIX_LR = 0.065       # learning rate for matrix parameters (probe higher for d4 256-dim)
 SCALAR_LR = 1.0         # learning rate for per-layer scalars (Adam; higher for deeper model)
