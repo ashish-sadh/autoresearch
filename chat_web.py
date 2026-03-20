@@ -440,10 +440,11 @@ CHAT_HTML = """<!DOCTYPE html>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #09090b; --surface: #111113; --border: #1f1f23; --border-focus: #3b6fd4;
-    --text: #f0f0f2; --text-dim: #71717a; --text-faint: #3f3f46;
-    --blue: #3b6fd4; --blue-bright: #5b8ff4; --blue-hover: #2a5abf;
-    --msg-user-bg: #1a3a6e; --msg-user-text: #c8dcff;
+    --bg: #09090b; --surface: #18181b; --border: #27272a; --border-focus: #3b82f6;
+    --text: #fafafa; --text-secondary: #a1a1aa; --text-faint: #52525b;
+    --blue: #3b82f6; --blue-hover: #2563eb;
+    --user-bg: #1e3a5f; --user-text: #dbeafe;
+    --asst-bg: #18181b; --asst-border: #27272a;
   }
   html, body { height: 100%; }
   body {
@@ -453,63 +454,100 @@ CHAT_HTML = """<!DOCTYPE html>
     max-width: 720px; margin: 0 auto;
     height: 100dvh;
   }
+
+  /* Header — minimal */
   #header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 16px 13px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
   }
-  #header .title { font-size: 0.88rem; font-weight: 600; letter-spacing: -0.01em; }
-  #header .sub { font-size: 0.74rem; color: var(--text-dim); margin-top: 1px; }
-  #header a { font-size: 0.74rem; color: var(--blue-bright); text-decoration: none; white-space: nowrap; margin-left: 12px; }
-  #header a:hover { color: #88aaff; }
+  #header .title { font-size: 0.85rem; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+  #header .sub { font-size: 0.7rem; color: var(--text-faint); margin-top: 1px; }
+  #header a { font-size: 0.7rem; color: var(--text-faint); text-decoration: none; }
+  #header a:hover { color: var(--text-secondary); }
+
+  /* Messages — the hero */
   #messages {
-    flex: 1; overflow-y: auto; padding: 16px;
-    display: flex; flex-direction: column; gap: 10px;
+    flex: 1; overflow-y: auto; padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 14px;
     -webkit-overflow-scrolling: touch;
   }
   .msg {
-    max-width: 78%; padding: 10px 13px;
-    font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
-    border-radius: 16px;
+    max-width: 80%; padding: 12px 16px;
+    font-size: 0.95rem; line-height: 1.65; white-space: pre-wrap; word-break: break-word;
   }
-  .user { align-self: flex-end; background: var(--msg-user-bg); color: var(--msg-user-text); border-radius: 16px 16px 4px 16px; }
-  .assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 4px 16px 16px 16px; }
+  .user {
+    align-self: flex-end; background: var(--user-bg); color: var(--user-text);
+    border-radius: 18px 18px 4px 18px;
+  }
+  .assistant {
+    align-self: flex-start; background: var(--asst-bg); border: 1px solid var(--asst-border);
+    color: var(--text); border-radius: 4px 18px 18px 18px;
+  }
   .assistant.thinking { color: var(--text-faint); font-style: italic; }
-  #controls {
-    display: flex; gap: 10px 18px; padding: 8px 16px;
-    border-top: 1px solid var(--border); flex-shrink: 0;
-    flex-wrap: wrap;
+
+  /* Empty state */
+  #empty {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    color: var(--text-faint); font-size: 0.85rem; text-align: center; padding: 20px;
   }
-  label { font-size: 0.7rem; color: var(--text-faint); white-space: nowrap; display: flex; align-items: center; gap: 5px; flex: 1 1 auto; min-width: 130px; }
-  input[type=range] { flex: 1; min-width: 60px; max-width: 90px; accent-color: var(--blue-bright); cursor: pointer; }
-  span.val { font-size: 0.7rem; color: var(--text-dim); min-width: 22px; }
-  #footer { padding: 10px 12px 12px; display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+
+  /* Input area — prominent */
+  #input-area {
+    padding: 12px 14px 8px; flex-shrink: 0;
+    border-top: 1px solid var(--border);
+  }
+  #input-row { display: flex; gap: 8px; align-items: flex-end; }
   #input {
     flex: 1; background: var(--surface); color: var(--text);
-    border: 1px solid var(--border); padding: 11px 14px;
-    border-radius: 22px; font-family: inherit; font-size: 1rem; line-height: 1.4;
-    resize: none; min-height: 44px; max-height: 140px; overflow-y: auto;
-    outline: none; transition: border-color 0.15s; -webkit-appearance: none;
+    border: 1px solid var(--border); padding: 12px 16px;
+    border-radius: 24px; font-family: inherit; font-size: 1rem; line-height: 1.45;
+    resize: none; min-height: 48px; max-height: 140px; overflow-y: auto;
+    outline: none; transition: border-color 0.2s; -webkit-appearance: none;
   }
-  #input:focus { border-color: var(--border-focus); }
+  #input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 1px var(--border-focus); }
   #input::placeholder { color: var(--text-faint); }
   #send {
     background: var(--blue); color: #fff; border: none;
-    width: 44px; height: 44px; border-radius: 50%;
-    cursor: pointer; font-size: 1.15rem;
+    width: 48px; height: 48px; border-radius: 50%;
+    cursor: pointer; font-size: 1.2rem;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     transition: background 0.15s, transform 0.1s; -webkit-tap-highlight-color: transparent;
   }
   #send:hover { background: var(--blue-hover); }
   #send:active { transform: scale(0.93); }
-  #send:disabled { opacity: 0.25; cursor: default; transform: none; }
-  #minfo { font-size: 0.68rem; color: var(--text-faint); padding: 0 16px 10px; flex-shrink: 0; }
-  #minfo a { color: var(--blue-bright); text-decoration: none; }
-  #minfo a:hover { color: #88aaff; }
+  #send:disabled { opacity: 0.2; cursor: default; transform: none; }
+
+  /* Controls — tucked away */
+  #controls-toggle {
+    display: flex; align-items: center; gap: 4px;
+    padding: 6px 0 4px; cursor: pointer; user-select: none;
+    font-size: 0.65rem; color: var(--text-faint); border: none; background: none;
+  }
+  #controls-toggle:hover { color: var(--text-secondary); }
+  #controls-toggle .arrow { font-size: 0.5rem; transition: transform 0.2s; }
+  #controls-toggle.open .arrow { transform: rotate(90deg); }
+  #controls {
+    display: none; gap: 8px 16px; padding: 6px 0 2px; flex-wrap: wrap;
+  }
+  #controls.open { display: flex; }
+  #controls label {
+    font-size: 0.65rem; color: var(--text-faint); white-space: nowrap;
+    display: flex; align-items: center; gap: 4px;
+  }
+  #controls input[type=range] { width: 64px; accent-color: var(--text-faint); cursor: pointer; opacity: 0.6; }
+  #controls input[type=range]:hover { opacity: 1; }
+  #controls .val { font-size: 0.65rem; color: var(--text-faint); min-width: 20px; }
+
+  /* Footer info */
+  #minfo { font-size: 0.65rem; color: var(--text-faint); padding: 0 16px 10px; flex-shrink: 0; }
+  #minfo a { color: var(--text-faint); text-decoration: none; }
+  #minfo a:hover { color: var(--text-secondary); }
+
   @media (max-width: 480px) {
-    .msg { max-width: 88%; font-size: 0.88rem; }
-    #header { padding: 12px 14px; }
-    #messages { padding: 12px; }
-    #footer { padding: 8px 10px 10px; }
+    .msg { max-width: 90%; font-size: 0.92rem; }
+    #header { padding: 10px 14px; }
+    #messages { padding: 16px 12px; }
+    #input-area { padding: 10px 12px 6px; }
   }
 </style>
 </head>
@@ -518,19 +556,25 @@ CHAT_HTML = """<!DOCTYPE html>
   <div><div class="title">autoresearch</div><div class="sub">SFT chat · small model, be patient</div></div>
   <a href="/blog">training log →</a>
 </div>
-<div id="messages"></div>
-<div id="controls">
-  <label>temp <input type="range" id="temp" min="0" max="2" step="0.05" value="0.7"><span class="val" id="temp-val">0.7</span></label>
-  <label>top-k <input type="range" id="topk" min="0" max="200" step="5" value="50"><span class="val" id="topk-val">50</span></label>
-  <label>max tokens <input type="range" id="maxtok" min="16" max="512" step="16" value="256"><span class="val" id="maxtok-val">256</span></label>
+<div id="messages">
+  <div id="empty">ask something — the model is small, answers will be rough</div>
 </div>
-<div id="footer">
-  <textarea id="input" placeholder="Ask something…" rows="1"></textarea>
-  <button id="send" onclick="sendMsg()">↑</button>
+<div id="input-area">
+  <div id="input-row">
+    <textarea id="input" placeholder="Ask something…" rows="1"></textarea>
+    <button id="send" onclick="sendMsg()">↑</button>
+  </div>
+  <button id="controls-toggle" onclick="toggleControls()"><span class="arrow">▶</span> settings</button>
+  <div id="controls">
+    <label>temp <input type="range" id="temp" min="0" max="2" step="0.05" value="0.7"><span class="val" id="temp-val">0.7</span></label>
+    <label>top-k <input type="range" id="topk" min="0" max="200" step="5" value="50"><span class="val" id="topk-val">50</span></label>
+    <label>max <input type="range" id="maxtok" min="16" max="512" step="16" value="256"><span class="val" id="maxtok-val">256</span></label>
+  </div>
 </div>
 <script>
 let history = [], es = null;
 const inputEl = document.getElementById('input');
+const msgEl = document.getElementById('messages');
 document.querySelectorAll('input[type=range]').forEach(el => {
   el.addEventListener('input', () => document.getElementById(el.id+'-val').textContent = el.value);
 });
@@ -538,12 +582,20 @@ inputEl.addEventListener('input', () => {
   inputEl.style.height = 'auto';
   inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
 });
+function toggleControls() {
+  const btn = document.getElementById('controls-toggle');
+  const ctrl = document.getElementById('controls');
+  btn.classList.toggle('open');
+  ctrl.classList.toggle('open');
+}
 function addMsg(role, text, id) {
+  const empty = document.getElementById('empty');
+  if (empty) empty.remove();
   const div = document.createElement('div');
   div.className = 'msg ' + role;
   if (id) div.id = id;
   div.textContent = text;
-  document.getElementById('messages').appendChild(div);
+  msgEl.appendChild(div);
   div.scrollIntoView({behavior: 'smooth', block: 'end'});
   return div;
 }
@@ -586,6 +638,7 @@ function sendMsg() {
 inputEl.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
 });
+inputEl.focus();
 </script>
 </body>
 </html>"""
