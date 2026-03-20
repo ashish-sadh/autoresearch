@@ -516,7 +516,7 @@ WARMDOWN_RATIO = 0.3    # fraction of time budget for LR warmdown (longer for fe
 FINAL_LR_FRAC = 0.0     # final LR as fraction of initial
 
 # Model size
-DEPTH = 8               # number of transformer layers
+DEPTH = 4               # number of transformer layers (explore loop; reset from d8 for fresh session)
 DEVICE_BATCH_SIZE = 16  # per-device batch size (restore to 16 for 2^15 batch)
 
 # ---------------------------------------------------------------------------
