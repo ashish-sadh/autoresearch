@@ -723,7 +723,8 @@ while True:
     # Load next batch outside timed region (prevents I/O stalls eating compute budget)
     x, y, epoch = next(train_loader)
 
-    if step > 10 and dt < 30.0:  # cap: skip catastrophic MPS stalls (>30s is not real compute)
+    _dt_cap = 300.0 if _use_checkpointing else 30.0  # larger cap for --time runs (big models have slow steps)
+    if step > 10 and dt < _dt_cap:  # cap: skip catastrophic MPS stalls
         total_training_time += dt
 
     # Periodic resume checkpoint (only for --time runs, not the 5-min loop)
