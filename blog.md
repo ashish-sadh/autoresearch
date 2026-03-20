@@ -10,6 +10,24 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 **Hardware**: Apple M5 Max, 64GB unified memory, macOS MPS
 **Optimizer**: Muon (matrix params) + AdamW (embeddings/scalars)
 
+### Experiment overview
+
+**Total experiments**: 123 · **Kept**: 34 · **Discarded**: 87 · **Crashes**: 0
+**Deep-train sessions**: 1 · **Accumulated pretraining**: 1.0h
+**Best explore val_bpb**: 1.295171
+
+**Top 5 highest-impact experiments**
+
+| val_bpb | Description |
+|---|---|
+| 1.295171 | MATRIX_LR 0.06→0.055 with Muon ns_steps=4 |
+| 1.295828 | Muon ns_steps 5→4 — faster steps = more gradient updates |
+| 1.301823 | MATRIX_LR 0.04→0.06 — first big LR jump |
+| 1.303503 | MATRIX_LR 0.070→0.075 in WD=0.0 regime |
+| 1.315839 | lm_head ns_steps 4→5 — tall matrix needs more precise polar decomp |
+
+**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality.
+
 ---
 
 *Entries below are added automatically after each deep-train. Newest at the bottom.*

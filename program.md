@@ -162,7 +162,7 @@ from prepare import MAX_SEQ_LEN
 from tokenizers import Tokenizer as HFTokenizer
 import pickle
 
-ACCUM_CKPT = os.path.expanduser("~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d24.pt")
+ACCUM_CKPT = os.path.expanduser("~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d16.pt")
 CACHE_DIR = os.path.expanduser("~/.cache/autoresearch")
 with open(os.path.join(CACHE_DIR, "tokenizer", "tokenizer.pkl"), "rb") as f:
     enc = pickle.load(f)
@@ -206,8 +206,8 @@ uv run sft.py --base-checkpoint $ACCUM_CKPT --max-steps 500 > sft.log 2>&1
 ```
 
 `sft.py` automatically versions the output:
-- `d24_sft/best_model.pt` — always the latest (what `chat_web.py --sft` loads)
-- `d24_sft/model_v001_1.0h.pt`, `meta_v001_1.0h.json` — versioned copies
+- `d16_sft/best_model.pt` — always the latest (what `chat_web.py --sft` loads)
+- `d16_sft/model_v001_1.0h.pt`, `meta_v001_1.0h.json` — versioned copies
 
 Read result: `tail -5 sft.log`
 
@@ -283,12 +283,26 @@ Append to `blog.md`:
 [2–3 sentence overall summary of what changed and why]
 ```
 
+### Step 5 — Update the experiment overview
+
+Update the "Experiment overview" section at the top of `blog.md` by counting from `results.tsv`:
+
+- **Total experiments**: count all non-header rows
+- **Kept**: count rows with status `keep`
+- **Discarded**: count rows with status `discard`
+- **Crashes**: count rows with status `crash`
+- **Deep-train sessions**: count rows with status `deep-train` and val_bpb != 0.000000
+- **Accumulated pretraining**: read from the latest accum checkpoint
+- **Best explore val_bpb**: lowest val_bpb among `keep` rows
+- **Top 5 highest-impact experiments**: the 5 `keep` rows with the lowest val_bpb, with their descriptions
+- **Key discoveries**: update if new insights emerged from recent experiments
+
 ### Log deep-train results
 
 Log both runs to `results.tsv` with status `deep-train`:
 
 ```
-<commit>	<val_bpb>	<memory_gb>	deep-train	Xh accum pretraining (d24)
+<commit>	<val_bpb>	<memory_gb>	deep-train	Xh accum pretraining (d16)
 <commit>	0.000000	0.0	deep-train	SFT on Xh accum checkpoint → chat UI live
 ```
 
