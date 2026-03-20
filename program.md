@@ -17,7 +17,7 @@ This is an experiment to have the LLM do its own research.
 **Recovery (session interrupted mid-run):**
 
 - *Mid 5-min loop run*: just re-run `uv run train.py > run.log 2>&1`. The loop never saves resume checkpoints, so no cleanup needed.
-- *Mid deep-train (1h run)*: Check how far it got with `grep "^\[ckpt\]" deeptrain_accum.log | tail -1`. Resume the remaining time: `uv run train.py --time <remaining_seconds> --resume --ckpt-name deeptrain_accum --depth 24 > deeptrain_accum.log 2>&1`.
+- *Mid deep-train (1h run)*: Check how far it got with `grep "^\[ckpt\]" deeptrain_accum.log | tail -1`. Resume the remaining time: `uv run train.py --time <remaining_seconds> --resume --ckpt-name deeptrain_accum --depth 16 > deeptrain_accum.log 2>&1`.
 - *Mid SFT*: re-run `uv run sft.py --base-checkpoint $ACCUM_CKPT > sft.log 2>&1`.
 
 ## Experimentation
@@ -126,7 +126,7 @@ As an example use case, a user might leave you running while they sleep. If each
 
 ## Deep-train: longer pretraining every 5 improvements
 
-After every **5 `keep` entries** in `results.tsv`, trigger a deep-train sequence. The deep-train always runs at **depth=24** (~860M params, 1536-dim), independently of whatever depth the explore loop is currently using. Use `--depth 24` to override without modifying `train.py`.
+After every **5 `keep` entries** in `results.tsv`, trigger a deep-train sequence. The deep-train always runs at **depth=16** (~215M params, 1024-dim), independently of whatever depth the explore loop is currently using. Use `--depth 16` to override without modifying `train.py`.
 
 **Trigger check**: At the start of every session and after every `keep`, compute: `K = total keep count`, `D = number of deep-train *sessions*` (count rows with status `deep-train` and val_bpb != 0.000000 — each session logs one pretraining row with a real val_bpb and one SFT row with 0.000000; only count the pretraining row). If `K // 5 > D`, run **one** deep-train, then resume the loop. Do not run multiple back-to-back deep-trains to catch up — one per check is enough.
 
@@ -135,7 +135,7 @@ Do this **in addition to** the regular loop — run the deep-train, then resume 
 ### Paths
 
 ```bash
-DEEP_DEPTH=24
+DEEP_DEPTH=16
 ACCUM_CKPT=~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d${DEEP_DEPTH}.pt
 SFT_DIR=~/.cache/autoresearch/checkpoints/d${DEEP_DEPTH}_sft
 
@@ -148,7 +148,7 @@ VER=$(printf "%03d" $N)
 
 ### Step 1 — Accumulated pretraining checkpoint
 
-Weights from the explore loop (depth=4) cannot transfer to depth=24 (different tensor shapes). The accum checkpoint is the deep-train's own cumulative record at depth=24.
+Weights from the explore loop (depth=4) cannot transfer to depth=16 (different tensor shapes). The accum checkpoint is the deep-train's own cumulative record at depth=16.
 
 Check whether the accum checkpoint exists and has a compatible architecture:
 
@@ -180,13 +180,13 @@ else:
 
 - **Compatible (same arch)**: resume and add 1 more hour on top:
   ```bash
-  uv run train.py --time 3600 --resume --ckpt-name deeptrain_accum --depth 24 --device-batch-size 4 > deeptrain_accum.log 2>&1
+  uv run train.py --time 3600 --resume --ckpt-name deeptrain_accum --depth 16 --device-batch-size 16 > deeptrain_accum.log 2>&1
   ```
 - **Incompatible or doesn't exist**: arch changed or first run — train from scratch:
   ```bash
-  uv run train.py --time 3600 --ckpt-name deeptrain_accum --depth 24 --device-batch-size 4 > deeptrain_accum.log 2>&1
+  uv run train.py --time 3600 --ckpt-name deeptrain_accum --depth 16 --device-batch-size 16 > deeptrain_accum.log 2>&1
   ```
-  Note: d=24 (855M params) uses ~62GB with B=4. B=8 and B=16 cause swap thrashing on 64GB hardware.
+  Note: d=16 (~215M params) fits comfortably at B=16 on 64GB. If OOM, fall back to B=8 then B=4.
 
 After the run, version it:
 ```bash
@@ -254,7 +254,7 @@ Append to `blog.md`:
 ```markdown
 ## #N · YYYY-MM-DD HH:MM · Xh accumulated pretraining
 
-**val_bpb**: X.XXXXXX · **model**: depth=24 · ~860M params · Xh pretraining
+**val_bpb**: X.XXXXXX · **model**: depth=16 · ~215M params · Xh pretraining
 
 **Last 5 improvements**: [one sentence each]
 
@@ -297,7 +297,7 @@ Use the current git HEAD commit hash. For the SFT row, val_bpb is not applicable
 After **50 `keep` entries** total in `results.tsv`, run a single 45-hour deep-train:
 
 ```bash
-uv run train.py --time 162000 --resume --ckpt-name deeptrain_accum --depth 24 --device-batch-size 4 > deeptrain_long.log 2>&1
+uv run train.py --time 162000 --resume --ckpt-name deeptrain_accum --depth 16 --device-batch-size 16 > deeptrain_long.log 2>&1
 ```
 
 This resumes from the existing accum checkpoint and adds 45 hours on top. The dataloader fast-forwards automatically. After it completes, run SFT and update the UI as usual.
