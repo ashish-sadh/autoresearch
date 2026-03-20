@@ -292,6 +292,7 @@ _footer_html = (
     f'depth {config.n_layer} · {_num_params/1e6:.1f}M params'
     f' · {_tokens_seen/1e9:.2f}B tokens · {_accum_hours:.1f}h pretraining'
     f' · <a href="/blog" style="color:#4a9eff;text-decoration:none">training log →</a>'
+    f' · powered by Ashish\'s Mac'
     f'</div>'
 )
 
@@ -474,13 +475,12 @@ CHAT_HTML = """<!DOCTYPE html>
   .assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 4px 16px 16px 16px; }
   .assistant.thinking { color: var(--text-faint); font-style: italic; }
   #controls {
-    display: flex; gap: 14px; padding: 6px 16px;
+    display: flex; gap: 10px 18px; padding: 8px 16px;
     border-top: 1px solid var(--border); flex-shrink: 0;
-    overflow-x: auto; scrollbar-width: none;
+    flex-wrap: wrap;
   }
-  #controls::-webkit-scrollbar { display: none; }
-  label { font-size: 0.7rem; color: var(--text-faint); white-space: nowrap; display: flex; align-items: center; gap: 5px; }
-  input[type=range] { width: 70px; accent-color: var(--blue-bright); cursor: pointer; }
+  label { font-size: 0.7rem; color: var(--text-faint); white-space: nowrap; display: flex; align-items: center; gap: 5px; flex: 1 1 auto; min-width: 130px; }
+  input[type=range] { flex: 1; min-width: 60px; max-width: 90px; accent-color: var(--blue-bright); cursor: pointer; }
   span.val { font-size: 0.7rem; color: var(--text-dim); min-width: 22px; }
   #footer { padding: 10px 12px 12px; display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
   #input {
