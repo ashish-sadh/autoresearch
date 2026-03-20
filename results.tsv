@@ -88,9 +88,6 @@ ceb39ba	1.370570	0.0	discard	MATRIX_LR 0.035→0.030 (too low; 0.035 confirmed o
 6797108	1.375071	0.0	discard	UNEMBEDDING_LR 0.02→0.025 (too high; 0.02 confirmed optimal)
 d7b36fa	1.369308	0.0	discard	ADAM_BETAS beta1 0.8→0.85 (marginal worse; 0.8 optimal)
 38a494c	1.329404	0.0	keep	ASPECT_RATIO 64→32 (256-dim 8-layer; MATRIX_LR 0.035→0.055; 1033 steps)
-978f4be	1.187486	0.0	deep-train	1h fresh from loop best (d8)
-978f4be	1.186364	0.0	deep-train	1h accum pretraining (d8)
-978f4be	0.000000	0.0	deep-train	SFT on 1h accum checkpoint → chat UI live
 7575b0a	1.345957	0.0	discard	MATRIX_LR 0.055→0.060 (too high; 0.055 optimal for AR=32)
 670a44a	1.336027	0.0	discard	MATRIX_LR 0.055→0.050 (worse; 0.055 confirmed optimal for AR=32)
 a85312d	1.328402	0.0	keep	TOTAL_BATCH_SIZE 2^14→2^15 DEVICE_BATCH_SIZE 8→16 for AR=32 (529 steps)
