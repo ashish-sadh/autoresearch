@@ -120,3 +120,4 @@ de45a9e	1.315501	0.0	keep	Exp139: ve_gate_channels 32→8 (smaller gate; more st
 74b3e4e	1.303503	0.0	keep	Exp140: MATRIX_LR 0.070→0.075 (WD=0.0 regime; big improvement; 756 steps)
 ec4ace0	1.315745	0.0	discard	Exp141: MATRIX_LR 0.075→0.080 (too high; 0.075 confirmed optimal)
 19c7711	1.307538	0.0	discard	Exp142: EMBEDDING_LR 0.4→0.35 (worse; 0.4 confirmed optimal)
+e98840f	1.316746	0.0	discard	Exp143: SCALAR_LR 2.0→3.0 (worse; 2.0 confirmed optimal; 772 steps)
