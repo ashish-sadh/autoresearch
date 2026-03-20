@@ -714,22 +714,22 @@ async def blog():
 <style>
   *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-          background: #09090b; color: #d4d4d8; padding: 24px 16px 48px;
-          max-width: 740px; margin: 0 auto; line-height: 1.7; font-size: 0.9rem; }}
-  a.back {{ display: inline-block; margin-bottom: 20px; font-size: 0.78rem; color: #5b8ff4;
+          background: #09090b; color: #d4d4d8; padding: 32px 20px 64px;
+          max-width: 760px; margin: 0 auto; line-height: 1.75; font-size: 1rem; }}
+  a.back {{ display: inline-block; margin-bottom: 24px; font-size: 0.82rem; color: #5b8ff4;
             text-decoration: none; }}
   a.back:hover {{ color: #88aaff; }}
-  .intro {{ margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid #1f1f23; }}
-  .intro h1 {{ font-size: 1.1rem; color: #f0f0f2; margin-bottom: 8px; font-weight: 600; }}
-  .intro p {{ color: #71717a; font-size: 0.83rem; margin: 3px 0; }}
-  .intro strong {{ color: #a1a1aa; }}
+  .intro {{ margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #1f1f23; }}
+  .intro h1 {{ font-size: 1.4rem; color: #f0f0f2; margin-bottom: 14px; font-weight: 700; letter-spacing: -0.02em; }}
+  .intro p {{ color: #b4b4be; font-size: 0.97rem; margin: 8px 0; line-height: 1.75; }}
+  .intro strong {{ color: #d4d4d8; }}
 
   /* Entry accordion */
   details.entry {{ border: 1px solid #1f1f23; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }}
   details.entry[open] {{ border-color: #2a2a35; }}
   summary.entry-title {{
-    list-style: none; cursor: pointer; padding: 13px 16px;
-    font-size: 0.85rem; font-weight: 600; color: #a1a1aa;
+    list-style: none; cursor: pointer; padding: 14px 18px;
+    font-size: 0.92rem; font-weight: 600; color: #a1a1aa;
     background: #111113; user-select: none;
     display: flex; align-items: center; gap: 8px;
   }}
@@ -738,13 +738,13 @@ async def blog():
   summary.entry-title::before {{ content: "▶"; font-size: 0.6rem; color: #3f3f46; transition: transform 0.2s; }}
   details.entry[open] summary.entry-title::before {{ transform: rotate(90deg); color: #5b8ff4; }}
 
-  .entry-body {{ padding: 16px; }}
-  .entry-body h3 {{ font-size: 0.78rem; font-weight: 600; color: #71717a; text-transform: uppercase;
-                    letter-spacing: 0.05em; margin: 14px 0 6px; }}
-  .entry-body p {{ color: #a1a1aa; font-size: 0.85rem; margin: 4px 0; }}
-  .entry-body strong {{ color: #d4d4d8; }}
-  .entry-body em {{ color: #71717a; }}
-  .entry-body code {{ font-family: monospace; font-size: 0.8rem; background: #1a1a1f; padding: 1px 5px; border-radius: 3px; color: #a0c8ff; }}
+  .entry-body {{ padding: 18px 20px; }}
+  .entry-body h3 {{ font-size: 0.72rem; font-weight: 700; color: #52525b; text-transform: uppercase;
+                    letter-spacing: 0.07em; margin: 18px 0 6px; }}
+  .entry-body p {{ color: #c4c4ce; font-size: 0.95rem; margin: 6px 0; line-height: 1.7; }}
+  .entry-body strong {{ color: #e8e8f0; }}
+  .entry-body em {{ color: #a1a1aa; }}
+  .entry-body code {{ font-family: monospace; font-size: 0.82rem; background: #1a1a1f; padding: 1px 5px; border-radius: 3px; color: #a0c8ff; }}
 
   /* Table (quality assessment) */
   table {{ width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.82rem; }}
