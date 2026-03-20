@@ -128,7 +128,7 @@ As an example use case, a user might leave you running while they sleep. If each
 
 After every **5 `keep` entries** in `results.tsv`, trigger a deep-train sequence. The deep-train always runs at **depth=24** (~860M params, 1536-dim), independently of whatever depth the explore loop is currently using. Use `--depth 24` to override without modifying `train.py`.
 
-**Trigger check**: At the start of every session and after every `keep`, compute: `K = total keep count`, `D = total deep-train count` (rows with status `deep-train`). If `K // 5 > D`, run **one** deep-train, then resume the loop. Do not run multiple back-to-back deep-trains to catch up — one per check is enough.
+**Trigger check**: At the start of every session and after every `keep`, compute: `K = total keep count`, `D = number of deep-train *sessions*` (count rows with status `deep-train` and val_bpb != 0.000000 — each session logs one pretraining row with a real val_bpb and one SFT row with 0.000000; only count the pretraining row). If `K // 5 > D`, run **one** deep-train, then resume the loop. Do not run multiple back-to-back deep-trains to catch up — one per check is enough.
 
 Do this **in addition to** the regular loop — run the deep-train, then resume the loop immediately after.
 
