@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 148 · **Kept**: 37 · **Discarded**: 103 · **Crashes**: 0
-**Deep-train sessions**: 4 · **Accumulated pretraining**: 4.0h
+**Total experiments**: 152 · **Kept**: 37 · **Discarded**: 107 · **Crashes**: 0
+**Deep-train sessions**: 5 · **Accumulated pretraining**: 5.0h
 **Best explore val_bpb**: 1.295480
 
 **Top 5 highest-impact experiments**
@@ -151,5 +151,35 @@ val_bpb improved markedly (1.215 vs 1.272, a 4.5% drop). Grammar is noticeably b
 | Emerging reasoning | better | Robot story uses temporal ordering ("First things first", "Firstly", "Secondly"); sky lists numbered suggestions; structure is becoming more organized |
 
 val_bpb dropped significantly (1.137 vs 1.215, a 6.4% improvement). The model continues to improve in grammar and structure — sentences are more complex and naturally punctuated. The robot story is notably better: it mentions robots, discusses maintenance and checkups, and uses sequential reasoning ("First... Secondly..."). However, the content still doesn't truly answer the questions. The sky answer is about colors/stores rather than Rayleigh scattering, and the math answer generates product-description jargon instead of arithmetic. The model is learning to organize thoughts but not yet to produce factual content.
+
+---
+
+## #5 · 2026-03-21 03:30 · 5.0h accumulated pretraining
+
+**val_bpb**: 1.105547 · **model**: depth=16, 1024-dim · ~285M params · 5h pretraining
+
+**Last 5 improvements**: FINAL_LR_FRAC 0.01→0.02 showed higher minimum LR helps; Muon momentum warmup 200→150 found faster ramp optimal for d4; MATRIX_LR 0.075→0.080 was unlocked by new schedule settings. These three cascading improvements continued to demonstrate that schedule parameter interactions are a major source of gains.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> From here, you're a hallmark of science and technology, and just like our friends do in our lives and nature. We'll explore some remarkable facts about Earth that will serve us well in scientific studies and exploration; highlighting their importance on understanding its significance, characteristics, potential implications, and the impact it has have on our worldviews. Last year, we moved to a newly formed planet where astronauts were given access to valuable insights into our solar systems. Their expertise led him to explore how scientists can better understand these complex structures without compromising their knowledge or experience of Earth.
+
+*Q: What is 2 + 2 and why?*
+> To solve this, you'll need: 1 Low-end (5 m) 1/3 8 = 1efficient (6) 0.01 7Value (1 m). You're given the value of a 2 * 4+ parameter if it's a 10 or more value. The correct answer is: a) x < - +>0 -zero 1/runtime (6, and x >) = ns 2+\text {3 * 9*}=0. There's a good line about this.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> To get started, I'm going to answer the question at what was your next word: What is it used for? Are you looking for an idea of how much they could use in an automobile industry or upgrade? Firstly, what is it and who's behind me? It starts out as a robot that understands when and where things work. And finally, its eyesight is set to "fostering" this process. Secondly, the answer was: How did you feel about it before you start? Is there anything else or not before? So, by looking at how different parts of the robot are involved in your job market segments, I'll be able to create a unique idea from what's next.
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | better | Complex sentences with semicolons, em-dashes, and subordinate clauses; vocabulary more sophisticated ("hallmark", "implications", "compromising") |
+| Coherency | better | Sky answer maintains a consistent science/exploration theme throughout; robot answer stays in the robot/technology domain |
+| Topic follow-through | better | Sky mentions Earth, solar systems, scientists; robot mentions "robot that understands", "fostering", and asks "How did you feel?" — closer to the prompt |
+| Emerging reasoning | better | Robot answer uses meta-commentary ("I'm going to answer the question"), poses rhetorical questions, structures argument with "Firstly/Secondly/Third"; math attempts to frame a solution |
+
+val_bpb improved to 1.106 (down from 1.137, a 2.8% drop). The most notable improvement is in coherency — the sky answer maintains a consistent theme about Earth science and exploration rather than drifting randomly. The robot answer is the best yet: it mentions a "robot that understands", discusses "fostering" as a process, and even asks "How did you feel?" which relates to the prompt about learning to feel. The math response still produces pseudo-formulas but now attempts structured problem-solving. Overall: the model is beginning to maintain topic coherence across paragraphs, a significant step forward.
 
 ---
