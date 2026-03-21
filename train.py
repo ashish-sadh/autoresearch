@@ -507,7 +507,7 @@ WINDOW_PATTERN = "L"    # sliding window pattern: L=full, S=full
 
 # Optimization
 TOTAL_BATCH_SIZE = 2**15 # ~32K tokens per optimizer step (DEPTH-4 style; may give better gradient signal)
-EMBEDDING_LR = 0.45     # probe slightly higher embedding LR in WD=0.0 regime
+EMBEDDING_LR = 0.50     # continue probing higher embedding LR (0.4→0.45 improved)
 UNEMBEDDING_LR = 0.02   # learning rate for lm_head (Muon)
 MATRIX_LR = 0.075       # probe higher in WD=0.0 regime (from 0.070)
 SCALAR_LR = 2.0         # learning rate for per-layer scalars (probe higher with WD=0.0)
