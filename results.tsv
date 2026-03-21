@@ -181,3 +181,7 @@ da2415f	1.286900	0.0	keep	Exp190: AdamW beta2=0.99 + Muon beta2=0.90 (combined n
 89eb339	1.293073	0.0	discard	Exp193: WARMDOWN_RATIO 0.25→0.20 (worse; 0.25 confirmed with new beta2)
 da2415f	1.085607	0.0	deep-train	6h accum pretraining d16 1024-dim; 2869 steps
 da2415f	0.000000	0.0	deep-train	SFT on 6h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
+79d1274	1.287262	0.0	discard	Exp194: Muon beta2 0.90→0.85 (marginal worse; 0.90 confirmed optimal)
+df3c799	1.293085	0.0	discard	Exp195: UNEMBEDDING_LR 0.02→0.025 (worse; 0.02 confirmed optimal)
+d146b8b	1.070019	0.0	deep-train	7h accum pretraining d16 1024-dim; 3415 steps
+d146b8b	0.000000	0.0	deep-train	SFT on 7h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev

@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 170 · **Kept**: 39 · **Discarded**: 123 · **Crashes**: 0
-**Deep-train sessions**: 6 · **Accumulated pretraining**: 6.0h
+**Total experiments**: 174 · **Kept**: 39 · **Discarded**: 127 · **Crashes**: 0
+**Deep-train sessions**: 7 · **Accumulated pretraining**: 7.0h
 **Best explore val_bpb**: 1.286900
 
 **Top 5 highest-impact experiments**
@@ -211,5 +211,35 @@ val_bpb improved to 1.106 (down from 1.137, a 2.8% drop). The most notable impro
 | Emerging reasoning | better | Sky answer presents a repeated claim-and-explanation structure; robot answer uses numbered categorization (1- Talent, 2- Gear and Health) with descriptions |
 
 val_bpb dropped to 1.086 (from 1.106, a 1.8% improvement). The standout is the sky answer mentioning "scattering" for the first time — the model is beginning to associate "blue sky" with the physical phenomenon. The robot answer is the best yet, discussing how "robots can navigate the complex nature of life together using their senses," which is remarkably close to the prompt about learning to feel. The math response collapsed to a single token, suggesting high uncertainty. Overall: emerging factual associations and better topic adherence, though reasoning remains surface-level.
+
+---
+
+## #7 · 2026-03-21 11:00 · 7.0h accumulated pretraining
+
+**val_bpb**: 1.070019 · **model**: depth=16, 1024-dim · ~285M params · 7h pretraining
+
+**Last 5 improvements**: Same as entry #6 — no new keeps since then. The explore loop has reached diminishing returns at the current d4 configuration. The key finding from this period was that combining two individually-marginal changes (AdamW beta2=0.99 + Muon beta2=0.90) produced a synergistic improvement.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> Their beautiful hues represent a clear and vibrant expression, which brings harmony between themes in their nature, colors, or patterns. Here's my intriguing connection that will enrich our understanding of this vast phenomenon: 1. Functions of blue - Nevertheless, as we mentioned earlier above, the sky is blue. Their color and pattern resonate with us deep into the world through a combination of colours that are often seen to reflect sunlight's warmth. 2. Combination Moonlights: Embrace nature elegance by combining natural patterns with vibrant colors in their hues. 3. Coffee & Versatility: Consider the various aspects such as light or darkness through a combination of green, blue, and yellow.
+
+*Q: What is 2 + 2 and why?*
+> Academic control over: -
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> In the vast and vibrant world of music, it's important to understand how to create an atmosphere that enriches your daily movement, whether you're on a regular basis or just starting out. With a few simple tips and techniques, we've got handy all-in-one apps you can use in your class. Firstly, let me tell you a short story about a robot who learns to feel. Here are 10 ways I can help you: 1. Important: Assume that you're not just learning how to communicate with strangers; it's also important for their physical and mental health. 2. Variable — To create a more immersive experience, we'll use different effects.
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce well-structured sentences with lists, bold formatting, and natural punctuation |
+| Coherency | same | Sky answer weaves colors/nature/light consistently; robot maintains the music/movement/apps theme |
+| Topic follow-through | better | Sky says "the sky is blue" and discusses "colours that reflect sunlight's warmth" — directly relevant; robot explicitly says "let me tell you a short story about a robot who learns to feel" — repeats the prompt verbatim |
+| Emerging reasoning | same | Both use numbered lists and categorization; no deeper causal reasoning yet |
+
+val_bpb improved to 1.070 (from 1.086, a 1.5% drop). The most striking development is the robot answer which now explicitly references the prompt: "let me tell you a short story about a robot who learns to feel." This is the first time the model directly echoes the user's request before attempting to answer. The sky answer also directly states "the sky is blue" and discusses colours reflecting sunlight. The math response remains a weak point, collapsing to near-empty output. The model is learning to acknowledge and frame responses around the user's question, even if the content remains imprecise.
 
 ---
