@@ -12,9 +12,9 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 126 · **Kept**: 34 · **Discarded**: 88 · **Crashes**: 0
-**Deep-train sessions**: 2 · **Accumulated pretraining**: 2.0h
-**Best explore val_bpb**: 1.295171
+**Total experiments**: 136 · **Kept**: 34 · **Discarded**: 96 · **Crashes**: 0
+**Deep-train sessions**: 3 · **Accumulated pretraining**: 3.0h
+**Best explore val_bpb**: 1.300779
 
 **Top 5 highest-impact experiments**
 
@@ -22,11 +22,11 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 |---|---|
 | 1.295171 | MATRIX_LR 0.06→0.055 with Muon ns_steps=4 |
 | 1.295828 | Muon ns_steps 5→4 — faster steps = more gradient updates |
+| 1.300779 | EMBEDDING_LR 0.4→0.45 in WD=0.0 regime |
 | 1.301823 | MATRIX_LR 0.04→0.06 — first big LR jump |
 | 1.303503 | MATRIX_LR 0.070→0.075 in WD=0.0 regime |
-| 1.315839 | lm_head ns_steps 4→5 — tall matrix needs more precise polar decomp |
 
-**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality.
+**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality; the d4 explore loop is reaching diminishing returns — most hyperparameters are tightly optimized.
 
 ---
 
@@ -91,5 +91,35 @@ Baseline for the d16 architecture (1024-dim, 285M params) with 1h pretraining. T
 | Emerging reasoning | same | No real causal structure; math lists numbers without logic; robot emits tool_call fragments |
 
 val_bpb improved significantly (1.272 vs 1.336) with 2x more pretraining. The sky response is notably better — it's short, mentions the sun and atmosphere, and doesn't hallucinate colors endlessly. The math response attempts problem-solving framing ("To solve the problem...") before drifting. The robot story still collapses into tool_call artifacts. Overall: first signs of topic awareness emerging, though no real reasoning yet.
+
+---
+
+## #3 · 2026-03-20 23:30 · 3.0h accumulated pretraining
+
+**val_bpb**: 1.214576 · **model**: depth=16, 1024-dim · ~285M params · 3h pretraining
+
+**Last 5 improvements**: EMBEDDING_LR 0.4→0.45 was the only new keep since last deep-train. Prior wins carried forward: MATRIX_LR 0.070→0.075 in WD=0.0 regime; ve_gate_channels 32→8 traded capacity for speed; FINAL_LR_FRAC 0.0→0.01 prevented over-decay; SCALAR_LR 1.0→2.0 accelerated skip-connection adaptation.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The answer to this question can help you understand how your sky might have been blue. If we know that our moon's stars are blue, then perhaps there may be more stars than ever before. In fact, what if one of these solar panels could lead to an overall atmosphere in astronauts? Especially those reflecting the mysterious earthquakes of Japan's Ontario Union, Yale or Sori might have been a viable alternative for today's planets. This may be true if you are looking at some of these solar panels. Now let's delve into that question – What other solar cells could we now focus on? Let's dive right in! Firstly, what do sky light reflections mean by the moon? By reading the images and exploring how stars can influence sunlight. Happy scrapbook!
+
+*Q: What is 2 + 2 and why?*
+> To maintain this, it's a 1) 4 + 0 = -5 (Eldogy), which follows the "length" of the first (i.e., 3.5). However, to avoid this with 2 + 6 + 7 + 9, we use a 4 + 8 formula for adding 1) to achieve the maximum value and 4 = -25. To create an equally 0; In addition, you can add (a *{"5*} / * "t", "length=\/c"...) The equation given for each = is: 1 + = (e.g., 2)
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> It's true that it doesn't necessarily have any or all of your feet in the field. But there is such an option as "relying off" a way to get your hands straight across one. Lastly, if you've managed to achieve more goal with each object level and then want them smoothly, make sure they'll start quickly.
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | better | Sentences are longer and more fluent; no invented words; contractions and punctuation used naturally |
+| Coherency | same | Sky answer still drifts (solar panels, earthquakes, scrapbook); math produces pseudo-formulas; robot story is off-topic |
+| Topic follow-through | same | Sky mentions "sky" and "blue" and "atmosphere" but doesn't explain causation; math mentions "4" but reasoning is wrong; robot story doesn't mention robots |
+| Emerging reasoning | same | Question-answer framing improved ("The answer to this question..."), rhetorical structure emerging ("Let's dive right in!"), but no actual causal reasoning |
+
+val_bpb improved markedly (1.215 vs 1.272, a 4.5% drop). Grammar is noticeably better — sentences are longer, more natural, and free of invented words. The model has picked up rhetorical patterns ("Let's delve into...", "Let's dive right in!") and question-framing structures. However, coherency and topic follow-through remain poor — the sky answer wanders into solar panels and earthquakes, and the robot story doesn't mention robots at all. The model is learning to write fluently but not yet to stay on topic or reason.
 
 ---

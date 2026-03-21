@@ -122,3 +122,15 @@ e98840f	1.316746	0.0	discard	Exp143: SCALAR_LR 2.0→3.0 (worse; 2.0 confirmed o
 ccbd76c	1.336272	0.0	deep-train	1h fresh d16 1024-dim; 468 steps (second deep-train)
 ccbd76c	0.000000	0.0	deep-train	SFT on 1h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
 9b895b5	1.300779	0.0	keep	Exp144: EMBEDDING_LR 0.4→0.45 (probe higher in WD=0.0 regime)
+3f90082	1.271953	0.0	deep-train	2h accum pretraining d16 1024-dim; 806 steps
+3f90082	0.000000	0.0	deep-train	SFT on 2h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
+5d74455	1.315798	0.0	discard	Exp145: EMBEDDING_LR 0.45→0.50 (worse; 0.45 confirmed optimal)
+fc0ebef	1.328092	0.0	discard	Exp146: UNEMBEDDING_LR 0.02→0.03 (worse; 0.02 confirmed optimal)
+1262eb0	1.314281	0.0	discard	Exp147: WARMDOWN_RATIO 0.3→0.35 (worse; 0.3 confirmed optimal)
+881985f	1.315958	0.0	discard	Exp148: ADAM_BETAS beta1 0.8→0.9 (worse; 0.8 confirmed optimal)
+b88cb19	1.313982	0.0	discard	Exp149: softcap 15→20 (worse; 15 confirmed optimal)
+857c5e6	1.313660	0.0	discard	Exp150: ve_gate_channels 8→4 (worse; 8 confirmed optimal; 676 steps)
+43d9887	1.307269	0.0	discard	Exp151: lm_head ns_steps 5→6 (732 steps; worse; 5 confirmed optimal)
+e15d0d7	1.307906	0.0	discard	Exp152: TOTAL_BATCH_SIZE 2^15→2^14 DEVICE_BATCH_SIZE 16→8 (1433 steps; worse)
+3892cf7	1.214576	0.0	deep-train	3h accum pretraining d16 1024-dim; 1268 steps
+3892cf7	0.000000	0.0	deep-train	SFT on 3h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
