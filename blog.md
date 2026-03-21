@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 123 · **Kept**: 34 · **Discarded**: 87 · **Crashes**: 0
-**Deep-train sessions**: 1 · **Accumulated pretraining**: 1.0h
+**Total experiments**: 126 · **Kept**: 34 · **Discarded**: 88 · **Crashes**: 0
+**Deep-train sessions**: 2 · **Accumulated pretraining**: 2.0h
 **Best explore val_bpb**: 1.295171
 
 **Top 5 highest-impact experiments**
