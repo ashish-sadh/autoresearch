@@ -12,21 +12,21 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 152 · **Kept**: 37 · **Discarded**: 107 · **Crashes**: 0
-**Deep-train sessions**: 5 · **Accumulated pretraining**: 5.0h
-**Best explore val_bpb**: 1.295480
+**Total experiments**: 170 · **Kept**: 39 · **Discarded**: 123 · **Crashes**: 0
+**Deep-train sessions**: 6 · **Accumulated pretraining**: 6.0h
+**Best explore val_bpb**: 1.286900
 
 **Top 5 highest-impact experiments**
 
 | val_bpb | Description |
 |---|---|
+| 1.286900 | AdamW beta2=0.99 + Muon beta2=0.90 combined |
+| 1.289130 | WARMDOWN_RATIO 0.3→0.25 with FINAL_LR_FRAC=0.02 |
 | 1.295171 | MATRIX_LR 0.06→0.055 with Muon ns_steps=4 |
 | 1.295480 | MATRIX_LR 0.075→0.080 with new warmup/FINAL_LR settings |
-| 1.295828 | Muon ns_steps 5→4 — faster steps = more gradient updates |
 | 1.297493 | Muon momentum warmup 200→150 steps |
-| 1.298525 | FINAL_LR_FRAC 0.01→0.02 — higher min LR at end |
 
-**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality; schedule parameters (FINAL_LR_FRAC, momentum warmup) have cascading effects — tuning one unlocks better optima for others (e.g. higher FINAL_LR_FRAC enabled higher MATRIX_LR and faster momentum warmup).
+**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality; schedule parameters have cascading effects — tuning one unlocks better optima for others; combining two individually-marginal changes (AdamW beta2 + Muon beta2) can produce synergistic improvements when each is individually at the noise floor.
 
 ---
 
@@ -181,5 +181,35 @@ val_bpb dropped significantly (1.137 vs 1.215, a 6.4% improvement). The model co
 | Emerging reasoning | better | Robot answer uses meta-commentary ("I'm going to answer the question"), poses rhetorical questions, structures argument with "Firstly/Secondly/Third"; math attempts to frame a solution |
 
 val_bpb improved to 1.106 (down from 1.137, a 2.8% drop). The most notable improvement is in coherency — the sky answer maintains a consistent theme about Earth science and exploration rather than drifting randomly. The robot answer is the best yet: it mentions a "robot that understands", discusses "fostering" as a process, and even asks "How did you feel?" which relates to the prompt about learning to feel. The math response still produces pseudo-formulas but now attempts structured problem-solving. Overall: the model is beginning to maintain topic coherence across paragraphs, a significant step forward.
+
+---
+
+## #6 · 2026-03-21 07:00 · 6.0h accumulated pretraining
+
+**val_bpb**: 1.085607 · **model**: depth=16, 1024-dim · ~285M params · 6h pretraining
+
+**Last 5 improvements**: FINAL_LR_FRAC 0.01→0.02; Muon momentum warmup 200→150; MATRIX_LR 0.075→0.080; WARMDOWN_RATIO 0.3→0.25; AdamW beta2=0.99 + Muon beta2=0.90 combined. The key insight was that combining two individually-marginal optimizer changes produced a synergistic improvement.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> Edge: The cloud is a small, shallow object that holds up to 6 metres of air as seen in the sun and the surface. It's also the heightest part in the solar system - it connects all directions together on such a scale, so we can visualize this by using its "top" scattering. The sky is blue (orange) - right? There are two main ways (array). In my experience, I have seen an idea that there will not be anything other than the sun's rays and whites. But in the sun at night, it would be a small object with just 6 metres on its surface. The sky is blue - right? There are two main ways (array) together, but we can visualize this by using a "bench" scattering as shown in Figure 6.
+
+*Q: What is 2 + 2 and why?*
+> Elen
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> The robots do not know how to approach the robot's physical and physiology; it is an important aspect of everyday life, as we hope them inspires you in your day. If you want to make sure that the human is able to follow the flow and help us regulate our body through a more active way, or when they are not capable of being up on the alert road. Instead, look forward to learning new skills and gaining strong connections. Hereby, we're going to learn about how robots can navigate the complex nature of life together using their senses. 1- The Talent: This is an extension that combines physical characteristics with chemical properties that make it easy for a human to recognize its potential in everyday life. 2- Gear and Health: The robot's unique abilities, body temperature patterns, and overall health are all crucial factors.
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both entries produce fluent, well-punctuated sentences; vocabulary remains sophisticated |
+| Coherency | better | Sky answer mentions "scattering" — first time a physics-adjacent concept appears; robot answer discusses "senses" and "physical characteristics" consistently |
+| Topic follow-through | better | Sky answer uses the word "scattering" and discusses sun's rays — closest to a correct explanation yet; robot discusses robots navigating life "using their senses" — closest to "learning to feel" |
+| Emerging reasoning | better | Sky answer presents a repeated claim-and-explanation structure; robot answer uses numbered categorization (1- Talent, 2- Gear and Health) with descriptions |
+
+val_bpb dropped to 1.086 (from 1.106, a 1.8% improvement). The standout is the sky answer mentioning "scattering" for the first time — the model is beginning to associate "blue sky" with the physical phenomenon. The robot answer is the best yet, discussing how "robots can navigate the complex nature of life together using their senses," which is remarkably close to the prompt about learning to feel. The math response collapsed to a single token, suggesting high uncertainty. Overall: emerging factual associations and better topic adherence, though reasoning remains surface-level.
 
 ---
