@@ -302,7 +302,7 @@ class GPT(nn.Module):
             ns = 5 if is_lm_head_group else 4  # tall matrix [8192,256] benefits from more NS steps
             param_groups.append(dict(
                 kind='muon', params=group_params, lr=lr,
-                momentum=0.95, ns_steps=ns, beta2=0.95, weight_decay=weight_decay,
+                momentum=0.95, ns_steps=ns, beta2=0.90, weight_decay=weight_decay,
             ))
         optimizer = MuonAdamW(param_groups)
         for group in optimizer.param_groups:
@@ -512,7 +512,7 @@ UNEMBEDDING_LR = 0.02   # learning rate for lm_head (Muon)
 MATRIX_LR = 0.080       # re-probe 0.080 with new FINAL_LR_FRAC + warmup settings
 SCALAR_LR = 2.0         # learning rate for per-layer scalars (probe higher with WD=0.0)
 WEIGHT_DECAY = 0.0      # no weight decay (small d4 model may not benefit from regularization)
-ADAM_BETAS = (0.8, 0.95) # Adam beta1, beta2
+ADAM_BETAS = (0.8, 0.99) # combine: beta2=0.99 AdamW + beta2=0.90 Muon
 WARMUP_RATIO = 0.0      # fraction of time budget for LR warmup
 WARMDOWN_RATIO = 0.25   # probe shorter warmdown (0.3→0.25) with new FINAL_LR_FRAC=0.02
 FINAL_LR_FRAC = 0.02    # probe slightly higher min LR (0.01→0.02)
