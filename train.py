@@ -507,7 +507,7 @@ WINDOW_PATTERN = "L"    # sliding window pattern: L=full, S=full
 
 # Optimization
 TOTAL_BATCH_SIZE = 2**15 # ~32K tokens per optimizer step (DEPTH-4 style; may give better gradient signal)
-EMBEDDING_LR = 0.50     # continue probing higher embedding LR (0.4→0.45 improved)
+EMBEDDING_LR = 0.45     # 0.4→0.45 improved (Exp144); 0.50 discarded (Exp145)
 UNEMBEDDING_LR = 0.02   # learning rate for lm_head (Muon)
 MATRIX_LR = 0.075       # probe higher in WD=0.0 regime (from 0.070)
 SCALAR_LR = 2.0         # learning rate for per-layer scalars (probe higher with WD=0.0)
@@ -515,7 +515,7 @@ WEIGHT_DECAY = 0.0      # no weight decay (small d4 model may not benefit from r
 ADAM_BETAS = (0.8, 0.95) # Adam beta1, beta2
 WARMUP_RATIO = 0.0      # fraction of time budget for LR warmup
 WARMDOWN_RATIO = 0.3    # fraction of time budget for LR warmdown (longer for fewer total steps)
-FINAL_LR_FRAC = 0.01    # small non-zero final LR (avoids over-decaying at end)
+FINAL_LR_FRAC = 0.02    # probe slightly higher min LR (0.01→0.02)
 
 # Model size
 DEPTH = 4               # explore loop starting point (agent may change this)
@@ -695,6 +695,8 @@ while True:
         train_loss = loss.detach()
         loss = loss / grad_accum_steps
         loss.backward()
+        if micro_step < grad_accum_steps - 1:
+            x, y, epoch = next(train_loader)
 
     # Progress and schedules
     progress = min(total_training_time / TIME_BUDGET, 1.0)
