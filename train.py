@@ -514,7 +514,7 @@ SCALAR_LR = 2.0         # learning rate for per-layer scalars (probe higher with
 WEIGHT_DECAY = 0.0      # no weight decay (small d4 model may not benefit from regularization)
 ADAM_BETAS = (0.8, 0.95) # Adam beta1, beta2
 WARMUP_RATIO = 0.0      # fraction of time budget for LR warmup
-WARMDOWN_RATIO = 0.3    # fraction of time budget for LR warmdown (longer for fewer total steps)
+WARMDOWN_RATIO = 0.25   # probe shorter warmdown (0.3→0.25) with new FINAL_LR_FRAC=0.02
 FINAL_LR_FRAC = 0.02    # probe slightly higher min LR (0.01→0.02)
 
 # Model size
