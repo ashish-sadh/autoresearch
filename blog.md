@@ -63,3 +63,33 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 Baseline for the d16 architecture (1024-dim, 285M params) with 1h pretraining. The model has picked up formatting patterns (bold headers, numbered lists, LaTeX-like fragments, even "tool_call" tokens) from the training data, but applies them nonsensically. Quality should improve as accumulated pretraining hours grow.
 
 ---
+
+## #2 · 2026-03-20 18:30 · 2.0h accumulated pretraining
+
+**val_bpb**: 1.271953 · **model**: depth=16, 1024-dim · ~285M params · 2h pretraining
+
+**Last 5 improvements**: EMBEDDING_LR 0.4→0.45 gave marginal improvement in the WD=0.0 regime (the only new keep since last deep-train). Prior improvements carried forward: MATRIX_LR 0.070→0.075 was the biggest recent win; ve_gate_channels 32→8 traded gate capacity for more steps; FINAL_LR_FRAC 0.0→0.01 avoided over-decay; SCALAR_LR 1.0→2.0 and MATRIX_LR 0.065→0.070 tuned the no-regularization optimum.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The sky is tied to an atmosphere of two, so it's a moment in which time. Therefore, it appears that the Sun will be blue is not blue but its geometric nature and longevity!
+
+*Q: What is 2 + 2 and why?*
+> To solve the problem, let's start by focusing on the 4 + 6 - 7 - 8 - 5. Consider your starting point of view of the problem list:
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> <tool_call>[{"name": "arguments", "arguments": {"motivate self"}, "strongest self-helpness"}]</tool_Cancellations: The robot's "front" is expressed in the human body. It has a dual expression for their own words and life, meaning they have to be more productive or even more effective. The robot needs a differential expressions from each person who must understand what she takes into account:
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | better | No invented words; sentences are shorter and more natural; "sunscheds"/"browth" artifacts gone |
+| Coherency | better | Sky response stays focused on sun/sky/atmosphere — short but thematically consistent for the first time |
+| Topic follow-through | better | Sky answer mentions "Sun" and "atmosphere" — first time a response touches the actual topic; math attempts "to solve the problem" before drifting |
+| Emerging reasoning | same | No real causal structure; math lists numbers without logic; robot emits tool_call fragments |
+
+val_bpb improved significantly (1.272 vs 1.336) with 2x more pretraining. The sky response is notably better — it's short, mentions the sun and atmosphere, and doesn't hallucinate colors endlessly. The math response attempts problem-solving framing ("To solve the problem...") before drifting. The robot story still collapses into tool_call artifacts. Overall: first signs of topic awareness emerging, though no real reasoning yet.
+
+---
