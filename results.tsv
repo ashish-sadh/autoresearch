@@ -134,3 +134,13 @@ b88cb19	1.313982	0.0	discard	Exp149: softcap 15→20 (worse; 15 confirmed optima
 e15d0d7	1.307906	0.0	discard	Exp152: TOTAL_BATCH_SIZE 2^15→2^14 DEVICE_BATCH_SIZE 16→8 (1433 steps; worse)
 3892cf7	1.214576	0.0	deep-train	3h accum pretraining d16 1024-dim; 1268 steps
 3892cf7	0.000000	0.0	deep-train	SFT on 3h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
+8003f80	1.298525	0.0	keep	Exp153: FINAL_LR_FRAC 0.01→0.02 (higher min LR; 794 steps)
+591649e	1.300217	0.0	discard	Exp154: FINAL_LR_FRAC 0.02→0.03 (worse; 0.02 confirmed optimal)
+197ccb6	1.297493	0.0	keep	Exp155: Muon momentum warmup 200→150 steps (faster ramp; 791 steps)
+3d561e5	1.298700	0.0	discard	Exp156: Muon momentum warmup 150→100 (too fast; 150 confirmed optimal)
+6a4ce4d	1.295480	0.0	keep	Exp157: MATRIX_LR 0.075→0.080 (re-probe with new settings; 802 steps)
+89fb881	1.297214	0.0	discard	Exp158: MATRIX_LR 0.080→0.085 (worse; 0.080 confirmed optimal)
+0f1d94a	1.297346	0.0	discard	Exp159: EMBEDDING_LR 0.45→0.50 (still worse; 0.45 confirmed optimal)
+0a21b61	1.299248	0.0	discard	Exp160: SCALAR_LR 2.0→3.0 (worse; 2.0 confirmed optimal; 837 steps)
+6a4ce4d	1.137062	0.0	deep-train	4h accum pretraining d16 1024-dim; 1772 steps
+6a4ce4d	0.000000	0.0	deep-train	SFT on 4h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev

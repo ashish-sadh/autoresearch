@@ -12,21 +12,21 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 136 · **Kept**: 34 · **Discarded**: 96 · **Crashes**: 0
-**Deep-train sessions**: 3 · **Accumulated pretraining**: 3.0h
-**Best explore val_bpb**: 1.300779
+**Total experiments**: 148 · **Kept**: 37 · **Discarded**: 103 · **Crashes**: 0
+**Deep-train sessions**: 4 · **Accumulated pretraining**: 4.0h
+**Best explore val_bpb**: 1.295480
 
 **Top 5 highest-impact experiments**
 
 | val_bpb | Description |
 |---|---|
 | 1.295171 | MATRIX_LR 0.06→0.055 with Muon ns_steps=4 |
+| 1.295480 | MATRIX_LR 0.075→0.080 with new warmup/FINAL_LR settings |
 | 1.295828 | Muon ns_steps 5→4 — faster steps = more gradient updates |
-| 1.300779 | EMBEDDING_LR 0.4→0.45 in WD=0.0 regime |
-| 1.301823 | MATRIX_LR 0.04→0.06 — first big LR jump |
-| 1.303503 | MATRIX_LR 0.070→0.075 in WD=0.0 regime |
+| 1.297493 | Muon momentum warmup 200→150 steps |
+| 1.298525 | FINAL_LR_FRAC 0.01→0.02 — higher min LR at end |
 
-**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality; the d4 explore loop is reaching diminishing returns — most hyperparameters are tightly optimized.
+**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality; schedule parameters (FINAL_LR_FRAC, momentum warmup) have cascading effects — tuning one unlocks better optima for others (e.g. higher FINAL_LR_FRAC enabled higher MATRIX_LR and faster momentum warmup).
 
 ---
 
@@ -121,5 +121,35 @@ val_bpb improved significantly (1.272 vs 1.336) with 2x more pretraining. The sk
 | Emerging reasoning | same | Question-answer framing improved ("The answer to this question..."), rhetorical structure emerging ("Let's dive right in!"), but no actual causal reasoning |
 
 val_bpb improved markedly (1.215 vs 1.272, a 4.5% drop). Grammar is noticeably better — sentences are longer, more natural, and free of invented words. The model has picked up rhetorical patterns ("Let's delve into...", "Let's dive right in!") and question-framing structures. However, coherency and topic follow-through remain poor — the sky answer wanders into solar panels and earthquakes, and the robot story doesn't mention robots at all. The model is learning to write fluently but not yet to stay on topic or reason.
+
+---
+
+## #4 · 2026-03-21 01:00 · 4.0h accumulated pretraining
+
+**val_bpb**: 1.137062 · **model**: depth=16, 1024-dim · ~285M params · 4h pretraining
+
+**Last 5 improvements**: FINAL_LR_FRAC 0.01→0.02 showed a higher minimum LR at end of warmdown helps; Muon momentum warmup 200→150 steps found faster ramp works better for d4; MATRIX_LR 0.075→0.080 was unlocked by the new schedule settings. These three cascading improvements demonstrate that schedule parameters interact — tuning one opens new optima for others.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> Here are some of the most popular photos in this series: 1) Ahhh, Haha! Then you can search for something from your favorite store (which might be a great idea), we've got a little bit more or less information about it. 2) Banding around the sky is not just about gathering data to share knowledge. It's also about making sense of what makes our thoughts so interesting and informative. Here are some suggestions that you can start with: 1) What colors will I mix? 2) Ahh, Haha! It's a great idea to add details such as the glow from your favorite store, rather than color changes. 3) Blacker Thrives: Superbugs are often less interesting and might give you more clarity or anchor over their colors.
+
+*Q: What is 2 + 2 and why?*
+> SearchTextCreate a link. To find out what happens when you want to use the product, please enter on your newcomb. The product (couldn't be used), was an object with no point at all. This article discusses some of its uses: Firstly, we can create something or describe it using our own way. Here are some properties that affect how many devices run under 2: Multiple-earned. Sets tend not have their own strengths at all and the differences between them.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> The robots are an essential part of the daily life cycle, so they need regular checkups and maintenance at their peak. Here's how you can make them easier: this will help keep track of when to take care of your young. First things first, let me tell you about a robot who wants it to do something new. Firstly, you must regularly clean up any debris and dust that might be causing the issue. This could mean cleaning the area with debris or even removing dirt from other objects. Secondly, if your child feels irritable or loses interest in their young, they may need immediate check-ups to prevent potential problems.
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | better | More complex sentence structures; natural use of colons, parentheticals, and list formatting; no invented words |
+| Coherency | same | Sky answer still drifts (stores, photos, superbugs); math produces product/link jargon; robot mixes childcare with maintenance |
+| Topic follow-through | better | Robot answer mentions "robots" and "checkups/maintenance" — first time the robot story relates to the topic; sky mentions "colors" and "sky" |
+| Emerging reasoning | better | Robot story uses temporal ordering ("First things first", "Firstly", "Secondly"); sky lists numbered suggestions; structure is becoming more organized |
+
+val_bpb dropped significantly (1.137 vs 1.215, a 6.4% improvement). The model continues to improve in grammar and structure — sentences are more complex and naturally punctuated. The robot story is notably better: it mentions robots, discusses maintenance and checkups, and uses sequential reasoning ("First... Secondly..."). However, the content still doesn't truly answer the questions. The sky answer is about colors/stores rather than Rayleigh scattering, and the math answer generates product-description jargon instead of arithmetic. The model is learning to organize thoughts but not yet to produce factual content.
 
 ---
