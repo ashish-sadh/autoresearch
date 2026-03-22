@@ -298,6 +298,33 @@ Update the "Experiment overview" section at the top of `blog.md` by counting fro
 - **Top 5 highest-impact experiments**: the 5 `keep` rows with the lowest val_bpb, with their descriptions
 - **Key discoveries**: update if new insights emerged from recent experiments
 
+### Step 6 — Push to GitHub and update README
+
+After each deep-train, push changes to GitHub:
+
+1. Update the **progress timeline table** in `README.md` — add a new row with the current hours, val_bpb, and brief assessment of grammar/coherency/topic follow-through/reasoning (one word + short note each).
+2. Retake screenshots using playwright:
+   ```python
+   from playwright.sync_api import sync_playwright
+   import time
+   with sync_playwright() as p:
+       browser = p.chromium.launch()
+       page = browser.new_page(viewport={"width": 800, "height": 900})
+       page.goto("http://localhost:8000")
+       time.sleep(2)
+       page.fill("#input", "Tell me a short story about a robot who learns to feel.")
+       page.click("#send")
+       time.sleep(40)
+       page.evaluate("document.getElementById('messages').scrollTop = 0")
+       time.sleep(1)
+       page.screenshot(path="screenshots/chat.png", full_page=False)
+       page.goto("http://localhost:8000/blog")
+       time.sleep(2)
+       page.screenshot(path="screenshots/blog.png", full_page=False)
+       browser.close()
+   ```
+3. Commit and push: `git add README.md screenshots/ blog.md results.tsv && git commit -m "deep-train #N: Xh accumulated" && git push`
+
 ### Log deep-train results
 
 Log both runs to `results.tsv` with status `deep-train`:
