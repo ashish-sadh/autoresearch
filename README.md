@@ -39,7 +39,7 @@ This project is a fork of [Karpathy's autoresearch](https://github.com/karpathy/
 Key things adopted from the original:
 
 - **Training recipe**: single-file GPT training from [modded-nanogpt](https://github.com/KellerJordan/modded-nanogpt) / [nanochat](https://github.com/karpathy/nanochat) — Muon + AdamW optimizer split, RoPE, value embeddings, relu² activation
-- **Dataset**: [climbmix-400b](https://huggingface.co/datasets/karpathy/climbmix-400b) — Karpathy's 400B token web text dataset
+- **Dataset**: [climbmix-400b](https://huggingface.co/datasets/karpathy/climbmix-400b-shuffle) — Karpathy's 400B token web text dataset
 - **Experiment loop**: the core keep/discard cycle driven by val_bpb as the single metric
 - **program.md**: the "agent playbook" concept — instructions encoded in markdown that the agent follows autonomously
 - **MPS support**: based on [miolini/autoresearch-macos](https://github.com/miolini/autoresearch-macos) fork for Apple Silicon
