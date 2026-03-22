@@ -766,6 +766,10 @@ while True:
     elif (step + 1) % 5000 == 0:
         gc.collect()
 
+    # Periodic MPS cache cleanup to prevent memory fragmentation slowdown
+    if device_type == "mps" and step > 0 and step % 50 == 0:
+        torch.mps.empty_cache()
+
     step += 1
 
     # Time's up — but only stop after warmup steps so we don't count compilation
