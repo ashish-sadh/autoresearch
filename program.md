@@ -2,6 +2,14 @@
 
 This is an experiment to have the LLM do its own research.
 
+## Steering notes
+
+**Read this section before every experiment and after every deep-train.** The human may update it at any time to change priorities.
+
+_Current directive:_ Exploration has saturated — focus on **deep-training**. Run a deep-train now (1h at d=16) before resuming the explore loop. After that, only explore if you find a keep within 10 experiments. If 10 consecutive experiments are all discards, stop exploring and trigger another deep-train instead. Accumulated pretraining hours are more valuable than marginal hyperparameter gains at this point.
+
+---
+
 ## Starting up
 
 **Fresh start (no prior work on this branch):**
@@ -98,7 +106,7 @@ d4e5f6g	0.000000	0.0	crash	double model width (OOM)
 
 The experiment runs on a dedicated branch (e.g. `autoresearch/mar5` or `autoresearch/mar5-gpu0`).
 
-**IMPORTANT**: Re-read `program.md` before every deep-train and at the start of every new session. The human may update it mid-session with new guidance, parameters, or fixes.
+**IMPORTANT**: Re-read `program.md` (especially the **Steering notes** section at the top) before every experiment and after every deep-train. The human may update it at any time to change priorities.
 
 LOOP FOREVER:
 
