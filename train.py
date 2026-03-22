@@ -509,7 +509,7 @@ WINDOW_PATTERN = "L"    # sliding window pattern: L=full, S=full
 TOTAL_BATCH_SIZE = 2**15 # ~32K tokens per optimizer step (DEPTH-4 style; may give better gradient signal)
 EMBEDDING_LR = 0.45     # 0.4→0.45 improved (Exp144); 0.50 discarded (Exp145)
 UNEMBEDDING_LR = 0.02   # learning rate for lm_head (Muon)
-MATRIX_LR = 0.080       # re-probe 0.080 with new FINAL_LR_FRAC + warmup settings
+MATRIX_LR = 0.090       # higher LR for fewer steps (MPS throttled regime)
 SCALAR_LR = 2.0         # learning rate for per-layer scalars (probe higher with WD=0.0)
 WEIGHT_DECAY = 0.0      # no weight decay (small d4 model may not benefit from regularization)
 ADAM_BETAS = (0.8, 0.99) # combine: beta2=0.99 AdamW + beta2=0.90 Muon
