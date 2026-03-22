@@ -8,6 +8,30 @@ A Claude Code agent runs in a continuous loop on an Apple M5 Max (64GB), modifyi
 
 **[Read the live training log →](blog.md)**
 
+![Chat UI](screenshots/chat.png)
+![Training Log](screenshots/blog.png)
+
+## Progress timeline
+
+The model is evaluated after each deep-train using 3 fixed benchmark prompts. Here's how capabilities have emerged over accumulated pretraining hours:
+
+| Hours | val_bpb | Grammar | Coherency | Topic follow-through | Reasoning |
+|---|---|---|---|---|---|
+| 1h | 1.336 | Invented words ("sunscheds", "browth") | None — random drift | Zero — questions ignored | None |
+| 2h | 1.272 | No invented words; shorter, natural | Sky mentions sun/atmosphere | First topic-adjacent responses | None |
+| 3h | 1.215 | Longer, fluent sentences | Still drifts (solar panels, earthquakes) | "The answer to this question..." framing | Rhetorical structure emerging |
+| 4h | 1.137 | Complex structures, natural punctuation | Mixes domains but less random | Robot answer mentions robots + maintenance | "First things first... Secondly..." |
+| 5h | 1.106 | Sophisticated vocabulary | Maintains consistent themes | Sky discusses Earth science; robot discusses "fostering" | Meta-commentary, rhetorical questions |
+| 6h | 1.086 | Fluent, well-punctuated | Sky mentions "scattering" | Robot discusses "navigating life using senses" | Numbered categorization with descriptions |
+| 7h | 1.070 | Complex, natural sentences | Consistent color/nature theme | Robot echoes prompt verbatim before answering | Temporal ordering, structured arguments |
+
+**Notable milestones:**
+- **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
+- **4h**: First sequential reasoning ("First... Secondly...")
+- **5h**: Model maintains topic coherence across paragraphs
+- **6h**: Physics-adjacent concept "scattering" appears in sky answer
+- **7h**: Model explicitly echoes user's question before attempting to answer
+
 ## Origins
 
 This project is a fork of [Karpathy's autoresearch](https://github.com/karpathy/autoresearch), which explores the idea of autonomous AI-driven research. The original setup gives an AI agent a small but real LLM training setup and lets it experiment overnight — modify code, train for 5 minutes, check if results improved, keep or discard, repeat.
