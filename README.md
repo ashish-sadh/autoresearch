@@ -9,7 +9,6 @@ A Claude Code agent runs in a continuous loop on an Apple M5 Max (64GB), modifyi
 **[Read the live training log →](blog.md)**
 
 ![Chat UI](screenshots/chat.png)
-![Training Log](screenshots/blog.png)
 
 ## How it works
 
