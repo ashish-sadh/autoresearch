@@ -11,7 +11,21 @@ A Claude Code agent runs in a continuous loop on an Apple M5 Max (64GB), modifyi
 ![Chat UI](screenshots/chat.png)
 ![Training Log](screenshots/blog.png)
 
+## How it works
+
+The system has two loops. The explore loop runs 24/7, trying ~12 experiments per hour at small scale. When enough improvements accumulate, a deep-train transfers those hyperparameter insights to a larger model and evaluates quality via benchmarks and a live chat UI.
+
+![System diagram](screenshots/loop_diagram.png)
+
+## What the agent explored
+
+Over 248 experiments, the agent autonomously searched across learning rates, schedules, architecture, optimizers, and more. Most experiments fail — only 17% of changes actually improved the model. But the ones that worked compounded.
+
+![Experiment categories](screenshots/categories.png)
+
 ## Progress timeline
+
+The single metric driving everything is **val_bpb** — validation bits per byte. It measures how many bits the model needs to encode each byte of unseen text. Lower means the model is better at predicting what comes next, which is the fundamental objective of pretraining.
 
 The model is evaluated after each deep-train using 3 fixed benchmark prompts. Here's how capabilities have emerged over accumulated pretraining hours:
 
@@ -31,6 +45,18 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 - **5h**: Model maintains topic coherence across paragraphs
 - **6h**: Physics-adjacent concept "scattering" appears in sky answer
 - **7h**: Model explicitly echoes user's question before attempting to answer
+
+### Benchmark responses over time
+
+The same three prompts are asked after every deep-train so progress is directly comparable. Here's how the model's responses evolved:
+
+![Sky responses](screenshots/before_after_sky.png)
+![Math responses](screenshots/before_after_math.png)
+![Robot responses](screenshots/before_after_robot.png)
+
+The val_bpb curve with key response milestones annotated:
+
+![Progress chart](screenshots/progress_chart.png)
 
 ## Origins
 
@@ -88,6 +114,7 @@ What I added on top:
 | `blog.md` | Live training log with benchmark responses | Agent (after deep-train) |
 | `results.tsv` | Full experiment history | Agent |
 | `program.md` | Agent playbook | Human |
+| `generate_visuals.py` | Regenerates charts in `screenshots/` from `results.tsv` and `blog.md` | Agent (after deep-train) |
 
 ## Quick start
 

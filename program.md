@@ -335,7 +335,8 @@ After each **deep-train**, also:
        page.screenshot(path="screenshots/blog.png", full_page=False)
        browser.close()
    ```
-3. Commit and push: `git add README.md screenshots/ blog.md results.tsv && git commit -m "deep-train #N: Xh accumulated" && git push && git push origin autoresearch/mar16:main`
+3. Regenerate visualizations: `uv run python generate_visuals.py`. This updates the before/after response cards, categories chart, progress chart, and loop diagram in `screenshots/`. If new benchmark responses are available, update the response data in `generate_visuals.py` before running — add new hour entries to the `make_question_visual` calls and update `generate_progress_chart` with the new data point.
+4. Commit and push: `git add README.md screenshots/ blog.md results.tsv generate_visuals.py && git commit -m "deep-train #N: Xh accumulated" && git push && git push origin autoresearch/mar16:main`
 
 ### Log deep-train results
 
