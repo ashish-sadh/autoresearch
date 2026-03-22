@@ -106,7 +106,7 @@ d4e5f6g	0.000000	0.0	crash	double model width (OOM)
 
 The experiment runs on a dedicated branch (e.g. `autoresearch/mar5` or `autoresearch/mar5-gpu0`).
 
-**IMPORTANT**: Re-read `program.md` (especially the **Steering notes** section at the top) before every experiment and after every deep-train. The human may update it at any time to change priorities.
+**IMPORTANT**: Re-read `program.md` (especially the **Steering notes** section at the top) before every explore run and before every deep-train. The human may update it at any time to change priorities.
 
 LOOP FOREVER:
 
