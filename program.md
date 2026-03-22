@@ -300,7 +300,11 @@ Update the "Experiment overview" section at the top of `blog.md` by counting fro
 
 ### Step 6 — Push to GitHub and update README
 
-After each deep-train, push changes to GitHub:
+**Keep the remote repo in sync.** Push after every keep, deep-train, and any change to blog.md, results.tsv, or README.md. The remote is `origin` on branch `autoresearch/mar16`. Also sync `main`: `git push origin autoresearch/mar16:main`.
+
+If `git push` fails due to divergence, run `git pull --rebase` first.
+
+After each **deep-train**, also:
 
 1. Update the **progress timeline table** in `README.md` — add a new row with the current hours, val_bpb, and brief assessment of grammar/coherency/topic follow-through/reasoning (one word + short note each).
 2. Retake screenshots using playwright:
@@ -323,7 +327,7 @@ After each deep-train, push changes to GitHub:
        page.screenshot(path="screenshots/blog.png", full_page=False)
        browser.close()
    ```
-3. Commit and push: `git add README.md screenshots/ blog.md results.tsv && git commit -m "deep-train #N: Xh accumulated" && git push`
+3. Commit and push: `git add README.md screenshots/ blog.md results.tsv && git commit -m "deep-train #N: Xh accumulated" && git push && git push origin autoresearch/mar16:main`
 
 ### Log deep-train results
 
