@@ -38,6 +38,75 @@ def parse_results():
     return rows
 
 
+def parse_blog_entries():
+    """Parse blog.md to extract deep-train entries with hours, val_bpb, and responses."""
+    with open(BLOG_MD) as f:
+        content = f.read()
+
+    entries = []
+    # Split on entry headers: ## #N · date · Xh accumulated pretraining
+    parts = re.split(r'## #\d+ · .+ · (.+?) accumulated pretraining', content)
+
+    for i in range(1, len(parts), 2):
+        hours_str = parts[i].strip()  # e.g. "1.0h" or "7.0h"
+        body = parts[i + 1] if i + 1 < len(parts) else ''
+
+        # Extract val_bpb
+        bpb_match = re.search(r'\*\*val_bpb\*\*:\s*([\d.]+)', body)
+        if not bpb_match:
+            continue
+        val_bpb = float(bpb_match.group(1))
+
+        # Extract hours as int
+        hours_float = float(hours_str.replace('h', ''))
+        hours_int = int(hours_float)
+
+        # Extract responses for each question
+        responses = {}
+        q_patterns = [
+            ('sky', r'\*Q: Explain why the sky is blue\.\*\n> (.+?)(?:\n\n|\n\*Q:)'),
+            ('math', r'\*Q: What is 2 \+ 2 and why\?\*\n> (.+?)(?:\n\n|\n\*Q:)'),
+            ('robot', r'\*Q: Tell me a short story about a robot who learns to feel\.\*\n> (.+?)(?:\n\n|\n\*\*Quality)'),
+        ]
+        for key, pat in q_patterns:
+            m = re.search(pat, body, re.DOTALL)
+            if m:
+                responses[key] = m.group(1).strip()
+
+        entries.append({
+            'hours': hours_int,
+            'hours_str': f'{hours_int}h',
+            'val_bpb': val_bpb,
+            'bpb_str': f'{val_bpb:.3f}',
+            'responses': responses,
+        })
+
+    return entries
+
+
+# Color palette: gradient from red (earliest) to green (latest)
+def _entry_colors(n):
+    """Return (color, bg) pairs graduating from red to green."""
+    if n == 1:
+        return [('#4CAF50', '#E8F5E9')]
+    palette = [
+        ('#E53935', '#FFF3F3'),
+        ('#F5A623', '#FFF8E1'),
+        ('#8BC34A', '#F1F8E9'),
+        ('#4CAF50', '#E8F5E9'),
+    ]
+    if n <= 4:
+        # Pick evenly spaced entries from the palette
+        indices = [int(i * (len(palette) - 1) / (n - 1)) for i in range(n)]
+        return [palette[i] for i in indices]
+    # For more than 4, interpolate
+    result = []
+    for i in range(n):
+        idx = int(i * (len(palette) - 1) / (n - 1))
+        result.append(palette[idx])
+    return result
+
+
 def categorize(desc):
     d = desc.lower()
     if any(x in d for x in ['matrix_lr', 'embedding_lr', 'scalar_lr', 'unembedding_lr']) and 'lr' in d:
@@ -97,13 +166,14 @@ def make_question_visual(question, notable, filename):
         ax.text(2.2, card_top - 0.3, f'val_bpb: {entry["bpb"]}', fontsize=10,
                 color=entry['color'], va='center', fontweight='bold', zorder=3)
 
-        note_badge = FancyBboxPatch((5.5, card_top - 0.55), 3.5, 0.45,
-                                     boxstyle='round,pad=0.08',
-                                     facecolor='white', edgecolor=entry['color'],
-                                     linewidth=1.5, alpha=0.95, zorder=2)
-        ax.add_patch(note_badge)
-        ax.text(7.25, card_top - 0.32, entry['note'], fontsize=8.5,
-                color=entry['color'], ha='center', va='center', fontweight='bold', zorder=3)
+        if entry.get('note'):
+            note_badge = FancyBboxPatch((5.5, card_top - 0.55), 3.5, 0.45,
+                                         boxstyle='round,pad=0.08',
+                                         facecolor='white', edgecolor=entry['color'],
+                                         linewidth=1.5, alpha=0.95, zorder=2)
+            ax.add_patch(note_badge)
+            ax.text(7.25, card_top - 0.32, entry['note'], fontsize=8.5,
+                    color=entry['color'], ha='center', va='center', fontweight='bold', zorder=3)
 
         wrapped = textwrap.fill(entry['response'], width=80)
         ax.text(1.2, card_top - 0.85, wrapped, fontsize=9, va='top',
@@ -114,90 +184,52 @@ def make_question_visual(question, notable, filename):
     print(f'  saved {filename}')
 
 
+def _truncate_response(text, max_chars=250):
+    """Truncate a response to max_chars, adding ... if needed."""
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars].rsplit(' ', 1)[0] + '...'
+
+
 def generate_before_after():
-    # Sky
-    make_question_visual('Explain why the sky is blue.', [
-        {
-            'hour': '1h', 'bpb': '1.336',
-            'response': 'The light of darker sunscheds appears to appear as a blue browth blue, which is a delicate blue, green color blue that has been blue, but an red hair gray green green red, where brown.',
-            'note': 'Invented words, no topic awareness',
-            'color': '#E53935', 'bg': '#FFF3F3',
-        },
-        {
-            'hour': '2h', 'bpb': '1.272',
-            'response': "The sky is tied to an atmosphere of two, so it's a moment in which time. Therefore, it appears that the Sun will be blue is not blue but its geometric nature and longevity!",
-            'note': 'First mention of "atmosphere" and "Sun"',
-            'color': '#F5A623', 'bg': '#FFF8E1',
-        },
-        {
-            'hour': '6h', 'bpb': '1.086',
-            'response': 'The cloud is a small, shallow object that holds up to 6 metres of air as seen in the sun and the surface... so we can visualize this by using its "top" scattering. The sky is blue (orange) - right?',
-            'note': '"Scattering" — first physics concept',
-            'color': '#8BC34A', 'bg': '#F1F8E9',
-        },
-        {
-            'hour': '7h', 'bpb': '1.070',
-            'response': "The sky is blue. Their color and pattern resonate with us deep into the world through a combination of colours that are often seen to reflect sunlight's warmth.",
-            'note': 'States "the sky is blue", mentions sunlight',
-            'color': '#4CAF50', 'bg': '#E8F5E9',
-        },
-    ], 'before_after_sky.png')
+    """Auto-generate before/after visuals by parsing blog.md entries."""
+    entries = parse_blog_entries()
+    if not entries:
+        print('  WARNING: no blog entries found, skipping before_after')
+        return
 
-    # Math
-    make_question_visual('What is 2 + 2 and why?', [
-        {
-            'hour': '1h', 'bpb': '1.336',
-            'response': 'To solve this problem, we multiply the two terms: 6.3 - 1 = x-ray bolder The answer is: "tool_call>[{"name": \\frac{n}}] Then',
-            'note': 'LaTeX + tool_call tokens, no understanding',
-            'color': '#E53935', 'bg': '#FFF3F3',
-        },
-        {
-            'hour': '3h', 'bpb': '1.215',
-            'response': "To maintain this, it's a 1) 4 + 0 = -5 (Eldogy), which follows the \"length\" of the first (i.e., 3.5). However, to avoid this with 2 + 6 + 7 + 9, we use a 4 + 8 formula.",
-            'note': 'Attempts math notation, numbers but wrong',
-            'color': '#F5A623', 'bg': '#FFF8E1',
-        },
-        {
-            'hour': '5h', 'bpb': '1.106',
-            'response': "To solve this, you'll need: 1 Low-end (5 m) 1/3 8 = 1efficient (6) 0.01 7Value (1 m). You're given the value of a 2 * 4+ parameter. The correct answer is: a) x < - +>0",
-            'note': '"The correct answer is:" — framing emerges',
-            'color': '#8BC34A', 'bg': '#F1F8E9',
-        },
-        {
-            'hour': '7h', 'bpb': '1.070',
-            'response': 'Academic control over: -',
-            'note': 'Collapsed — math remains hardest',
-            'color': '#4CAF50', 'bg': '#E8F5E9',
-        },
-    ], 'before_after_math.png')
+    # Show first entry, plus evenly spaced notable ones, plus latest
+    # Pick ~4 entries: first, ~1/3, ~2/3, last
+    if len(entries) <= 4:
+        selected = entries
+    else:
+        n = len(entries)
+        indices = [0, n // 3, 2 * n // 3, n - 1]
+        # Deduplicate
+        indices = sorted(set(indices))
+        selected = [entries[i] for i in indices]
 
-    # Robot
-    make_question_visual('Tell me a short story about a robot who learns to feel.', [
-        {
-            'hour': '1h', 'bpb': '1.336',
-            'response': "The robot is now part of the conversation... 1. Epit: A robot will be able to control its length. 2. Avoid overcrowded or logical: Consider all that is needed. 3. Cost For: A robot will be able to control its length and perform tasks in general.",
-            'note': 'Spec sheet, no narrative at all',
-            'color': '#E53935', 'bg': '#FFF3F3',
-        },
-        {
-            'hour': '4h', 'bpb': '1.137',
-            'response': "The robots are an essential part of the daily life cycle, so they need regular checkups and maintenance at their peak. First things first, let me tell you about a robot who wants it to do something new. Firstly, you must regularly clean up any debris and dust...",
-            'note': 'First sequential reasoning emerges',
-            'color': '#F5A623', 'bg': '#FFF8E1',
-        },
-        {
-            'hour': '6h', 'bpb': '1.086',
-            'response': "We're going to learn about how robots can navigate the complex nature of life together using their senses. 1- The Talent: combines physical characteristics with chemical properties. 2- Gear and Health: The robot's unique abilities, body temperature patterns, and overall health are all crucial.",
-            'note': 'Robots "using their senses" — near topic',
-            'color': '#8BC34A', 'bg': '#F1F8E9',
-        },
-        {
-            'hour': '7h', 'bpb': '1.070',
-            'response': "Firstly, let me tell you a short story about a robot who learns to feel. Here are 10 ways I can help you: 1. Important: Assume that you're not just learning how to communicate with strangers; it's also important for their physical and mental health.",
-            'note': 'Echoes prompt verbatim before answering',
-            'color': '#4CAF50', 'bg': '#E8F5E9',
-        },
-    ], 'before_after_robot.png')
+    colors = _entry_colors(len(selected))
+
+    questions = {
+        'sky': ('Explain why the sky is blue.', 'before_after_sky.png'),
+        'math': ('What is 2 + 2 and why?', 'before_after_math.png'),
+        'robot': ('Tell me a short story about a robot who learns to feel.', 'before_after_robot.png'),
+    }
+
+    for key, (question, filename) in questions.items():
+        notable = []
+        for entry, (color, bg) in zip(selected, colors):
+            resp = entry['responses'].get(key, '(no response found)')
+            notable.append({
+                'hour': entry['hours_str'],
+                'bpb': entry['bpb_str'],
+                'response': _truncate_response(resp),
+                'note': '',  # auto-generated entries don't have manual notes
+                'color': color,
+                'bg': bg,
+            })
+        make_question_visual(question, notable, filename)
 
 
 # ============================================================
@@ -252,49 +284,50 @@ def generate_categories():
 # ============================================================
 
 def generate_progress_chart():
-    hours = [1, 2, 3, 4, 5, 6, 7]
-    val_bpb = [1.336, 1.272, 1.215, 1.137, 1.106, 1.086, 1.070]
+    """Auto-generate val_bpb curve with sky response snippets from blog.md."""
+    entries = parse_blog_entries()
+    if not entries:
+        print('  WARNING: no blog entries found, skipping progress_chart')
+        return
+
+    hours = [e['hours'] for e in entries]
+    val_bpb = [e['val_bpb'] for e in entries]
 
     fig, ax = plt.subplots(figsize=(12, 6))
     ax.plot(hours, val_bpb, 'o-', color='#4A90D9', linewidth=2.5, markersize=10, zorder=5)
     ax.fill_between(hours, val_bpb, max(val_bpb) + 0.02, alpha=0.06, color='#4A90D9')
 
-    annotations = {
-        1: {
-            'text': '"...darker sunscheds\nappears as a blue\nbrowth blue..."',
-            'note': 'Invented words',
-            'color': '#E53935',
-            'offset': (50, 15),
-        },
-        2: {
-            'text': '"...tied to an\natmosphere...the Sun\nwill be blue..."',
-            'note': 'First "atmosphere" + "Sun"',
-            'color': '#F5A623',
-            'offset': (50, -15),
-        },
-        6: {
-            'text': '"...using its top\nscattering. The sky\nis blue..."',
-            'note': '"Scattering" appears',
-            'color': '#8BC34A',
-            'offset': (-160, -55),
-        },
-        7: {
-            'text': '"The sky is blue.\n...colours that reflect\nsunlight\'s warmth."',
-            'note': 'Directly states it',
-            'color': '#4CAF50',
-            'offset': (40, 25),
-        },
-    }
+    # Annotate first and last entry with sky response snippets
+    colors = _entry_colors(len(entries))
+    # Pick first, last, and up to 2 in between for annotations
+    if len(entries) <= 4:
+        ann_indices = list(range(len(entries)))
+    else:
+        n = len(entries)
+        ann_indices = [0, n // 3, 2 * n // 3, n - 1]
+        ann_indices = sorted(set(ann_indices))
 
-    for h, ann in annotations.items():
-        bpb = val_bpb[hours.index(h)]
+    # Alternate annotation offsets to avoid overlaps
+    offsets = [(50, 20), (50, -40), (-170, -50), (50, 30), (-170, 30), (50, -50)]
+
+    for idx_i, idx in enumerate(ann_indices):
+        e = entries[idx]
+        sky = e['responses'].get('sky', '')
+        if not sky:
+            continue
+        snippet = sky[:80].rsplit(' ', 1)[0] + '...' if len(sky) > 80 else sky
+        # Wrap to 25 chars per line
+        wrapped = '\n'.join(textwrap.wrap(f'"{snippet}"', width=25))
+        color = colors[idx][0]
+        offset = offsets[idx_i % len(offsets)]
+
         ax.annotate(
-            f'{ann["note"]}\n{ann["text"]}',
-            (h, bpb),
-            textcoords='offset points', xytext=ann['offset'],
-            fontsize=8, family='monospace', color='#333',
-            bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor=ann['color'], alpha=0.9, linewidth=1.5),
-            arrowprops=dict(arrowstyle='->', color=ann['color'], lw=1.5),
+            wrapped,
+            (e['hours'], e['val_bpb']),
+            textcoords='offset points', xytext=offset,
+            fontsize=7.5, family='monospace', color='#333',
+            bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor=color, alpha=0.9, linewidth=1.5),
+            arrowprops=dict(arrowstyle='->', color=color, lw=1.5),
             ha='left', va='center'
         )
 
@@ -304,7 +337,8 @@ def generate_progress_chart():
     ax.set_xticks(hours)
     ax.set_xticklabels([f'{h}h' for h in hours])
     ax.grid(True, alpha=0.2)
-    ax.set_ylim(1.02, 1.40)
+    margin = (max(val_bpb) - min(val_bpb)) * 0.15
+    ax.set_ylim(min(val_bpb) - margin, max(val_bpb) + margin)
     fig.tight_layout()
     fig.savefig(os.path.join(OUT_DIR, 'progress_chart.png'), dpi=200, bbox_inches='tight')
     plt.close()
