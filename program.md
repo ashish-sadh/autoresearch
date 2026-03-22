@@ -6,7 +6,7 @@ This is an experiment to have the LLM do its own research.
 
 **Read this section before every experiment and after every deep-train.** The human may update it at any time to change priorities.
 
-_Current directive:_ Exploration has saturated — focus on **deep-training**. Run a deep-train now (1h at d=16) before resuming the explore loop. After that, only explore if you find a keep within 10 experiments. If 10 consecutive experiments are all discards, stop exploring and trigger another deep-train instead. Accumulated pretraining hours are more valuable than marginal hyperparameter gains at this point.
+_Current directive:_ Exploration has saturated — focus on **deep-training**. Run a **13-hour deep-train** immediately: `uv run train.py --time 46800 --resume --ckpt-name deeptrain_accum --depth 16 --device-batch-size 16 > deeptrain_accum.log 2>&1`. After it completes, run SFT, update blog/README/screenshots, push to GitHub, then resume the explore loop. Only explore if you find a keep within 10 experiments. If 10 consecutive discards, trigger another deep-train (1h) instead.
 
 ---
 
