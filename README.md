@@ -52,6 +52,7 @@ What I added on top:
 - **Accumulation checkpoints**: deep-train checkpoints accumulate training hours across sessions with dataloader fast-forward to avoid repeating data
 - **SFT auto-versioning**: versioned SFT checkpoints with accumulated hours embedded in filenames
 - **Safe git workflow**: `git reset $BEFORE` instead of `HEAD~1` so infra changes aren't accidentally reverted by the experiment loop
+- **Public access via ngrok**: after each deep-train, the agent serves the latest SFT model via ngrok, making it easy to check improvements from any device without being on the same network. The agent automatically loads the best checkpoint after each longer pretraining session
 
 ## Architecture
 
