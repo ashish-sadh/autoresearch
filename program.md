@@ -197,7 +197,7 @@ else:
   ```bash
   uv run train.py --time 3600 --ckpt-name deeptrain_accum --depth 16 --device-batch-size 16 > deeptrain_accum.log 2>&1
   ```
-  Note: d=16 (~215M params) fits comfortably at B=16 on 64GB. If OOM, fall back to B=8 then B=4.
+  Note: d=16 (~215M params) fits comfortably at B=16 on 64GB. If OOM or MPS stalls occur, **stop the chat UI and ngrok first** (`pkill -f chat_web.py; pkill -f ngrok`) to free GPU memory before retrying at B=16. Only fall back to B=8 if it still OOMs after stopping the UI.
 
 After the run, version it:
 ```bash
