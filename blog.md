@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 174 · **Kept**: 39 · **Discarded**: 127 · **Crashes**: 0
-**Deep-train sessions**: 7 · **Accumulated pretraining**: 7.0h
+**Total experiments**: 249 · **Kept**: 40 · **Discarded**: 193 · **Crashes**: 0
+**Deep-train sessions**: 8 · **Accumulated pretraining**: 14.5h
 **Best explore val_bpb**: 1.286900
 
 **Top 5 highest-impact experiments**
@@ -24,9 +24,9 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 | 1.289130 | WARMDOWN_RATIO 0.3→0.25 with FINAL_LR_FRAC=0.02 |
 | 1.295171 | MATRIX_LR 0.06→0.055 with Muon ns_steps=4 |
 | 1.295480 | MATRIX_LR 0.075→0.080 with new warmup/FINAL_LR settings |
-| 1.297493 | Muon momentum warmup 200→150 steps |
+| 1.295828 | Muon ns_steps 5→4 (faster steps → more gradient updates) |
 
-**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality; schedule parameters have cascading effects — tuning one unlocks better optima for others; combining two individually-marginal changes (AdamW beta2 + Muon beta2) can produce synergistic improvements when each is individually at the noise floor.
+**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality; schedule parameters have cascading effects — tuning one unlocks better optima for others; combining two individually-marginal changes (AdamW beta2 + Muon beta2) can produce synergistic improvements when each is individually at the noise floor; exploration has deeply saturated — 75 consecutive discards after the last keep indicates all low-hanging fruit has been found; periodic MPS empty_cache fights GPU memory fragmentation on Apple Silicon.
 
 ---
 
@@ -241,5 +241,35 @@ val_bpb dropped to 1.086 (from 1.106, a 1.8% improvement). The standout is the s
 | Emerging reasoning | same | Both use numbered lists and categorization; no deeper causal reasoning yet |
 
 val_bpb improved to 1.070 (from 1.086, a 1.5% drop). The most striking development is the robot answer which now explicitly references the prompt: "let me tell you a short story about a robot who learns to feel." This is the first time the model directly echoes the user's request before attempting to answer. The sky answer also directly states "the sky is blue" and discusses colours reflecting sunlight. The math response remains a weak point, collapsing to near-empty output. The model is learning to acknowledge and frame responses around the user's question, even if the content remains imprecise.
+
+---
+
+## #8 · 2026-03-22 13:30 · 14.5h accumulated pretraining
+
+**val_bpb**: 1.028352 · **model**: depth=16, 1024-dim · ~285M params · 14.5h pretraining
+
+**Last 5 improvements**: AdamW beta2=0.99 + Muon beta2=0.90 combined was the last hyperparameter win; periodic MPS empty_cache every 50 steps was the only new keep — an infrastructure fix for GPU memory fragmentation. The explore loop has deeply saturated with 75+ consecutive discards, confirming all low-hanging optimization fruit has been found at d4. This deep-train was a 13h extended session (7.5h new training on top of 7h prior) directed by steering notes to focus on pretraining depth over exploration.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The sky is made of a dotted line and it's called "gray" because its distance to two points decreases with time. What are the consequences of bluish blacks? Black blacks can occur due to various reasons such as: The Blue Point (the Blue Dance) has been developed which allows for blue point observation, a phenomenon that occurs in nature. As mentioned above, there is no direct connection between this phenomenon and its corresponding sky. Therefore, the sky must be blocked by bluish objects to create any harmonious effect. However, it's crucial to note that Blacks can also have various causes. The consequences of blue dance are not known in nature or even beyond; rather, they occur due to factors such as: Black appears only on the right side of the sky. blue is left behind. red does not appear dark and blue light occurs on the other sides of the horizon. To prevent all these accidents, we can take steps to avoid bluish blacks in particular.
+
+*Q: What is 2 + 2 and why?*
+> Here are a few things to consider when choosing the right answer. The first step in selecting a correct solution is understanding what it means. The answer should be no less than one or two letters long, but this will vary depending on where you're looking at your home. As mentioned earlier, there are several options that can help you choose from: 1) **Correction**: A combination of both sides together to create a correct solution. 2) **Medium Call-Up (MAX): This is the best option for determining if it's right or wrong. 3) **Temperature and Pressure Regulation (TPR) (To determine how far your home is safe from high pressure, you can consider using a TPI to estimate the longest distance between its two main points.) 2) **Acceleration & Cooling: A combination of both sides together to create a correct solution.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> The robots are taught by simple, gentle and fun techniques that can help you communicate with the world around them. Early Robotics (Ryobots) is an interactive program designed specifically for students ages 9-12 in high school or college. In this story, we explore a robotic robot who learns to feel. The robots are taught by simple and fun techniques that can help you communicate with the world around them. Early Robotics (Ryobots) is an interactive program designed specifically for students ages 9-12 in high school or college. In this story, we explore a robotic robot who learns to feel.
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce fluent, well-punctuated sentences with bold formatting and numbered lists |
+| Coherency | worse | Sky answer invents "Blue Dance" and "bluish blacks" concepts; robot gets stuck in a repetition loop; math drifts into home safety |
+| Topic follow-through | same | Sky mentions "blue", "light", "horizon" but reasoning is nonsensical; robot says "a robotic robot who learns to feel" but loops; math completely off-topic |
+| Emerging reasoning | same | Numbered lists, bold headers, rhetorical structure present but no actual causal reasoning; robot repetition loop is a regression |
+
+val_bpb improved significantly (1.028 vs 1.070, a 3.9% drop — the largest single-session improvement yet). However, the SFT chat responses don't show clear improvement over the 7h model. The sky answer is longer and mentions relevant terms (blue, light, horizon) but constructs nonsensical explanations around them. The robot answer gets caught in a repetition loop — a new failure mode. The math response remains completely off-topic. The disconnect between val_bpb improvement and SFT quality suggests the base model is improving (better next-token prediction) but the instruction-following capability needs more pretraining data or SFT tuning to translate into coherent responses. This is the first deep-train where doubling pretraining hours (7h→14.5h) didn't produce visible chat quality gains, though the underlying model is measurably better.
 
 ---
