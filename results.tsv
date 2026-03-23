@@ -250,3 +250,5 @@ c61e4c5	1.318209	0.0	keep	Exp255: periodic MPS empty_cache every 50 steps (infra
 09d1631	0.000000	0.0	deep-train	SFT on 14.5h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
 09c7764	1.014974	0.0	deep-train	17.6h accum pretraining d16 1024-dim; 8154 steps
 09c7764	0.000000	0.0	deep-train	SFT on 17.6h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
+7358a5f	1.298282	0.0	keep	Exp257 (human): MPS pipeline fixes — sync every 10 steps, cache window mask, optimizer scalars on-device, skip GQA expand ratio=1, empty_cache every 200
+7358a5f	1.282250	0.0	keep	Exp258 (human): bfloat16 autocast on MPS — 21% more steps, bf16 matmuls at transformer sizes

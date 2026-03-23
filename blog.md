@@ -12,21 +12,21 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 251 · **Kept**: 40 · **Discarded**: 193 · **Crashes**: 0
+**Total experiments**: 253 · **Kept**: 42 · **Discarded**: 193 · **Crashes**: 0
 **Deep-train sessions**: 9 · **Accumulated pretraining**: 17.6h
-**Best explore val_bpb**: 1.286900
+**Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
 
 | val_bpb | Description |
 |---|---|
+| 1.282250 | bfloat16 autocast on MPS — 21% more steps at transformer-relevant sizes (human-identified) |
 | 1.286900 | AdamW beta2=0.99 + Muon beta2=0.90 combined |
 | 1.289130 | WARMDOWN_RATIO 0.3→0.25 with FINAL_LR_FRAC=0.02 |
 | 1.295171 | MATRIX_LR 0.06→0.055 with Muon ns_steps=4 |
 | 1.295480 | MATRIX_LR 0.075→0.080 with new warmup/FINAL_LR settings |
-| 1.295828 | Muon ns_steps 5→4 (faster steps → more gradient updates) |
 
-**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality; schedule parameters have cascading effects — tuning one unlocks better optima for others; combining two individually-marginal changes (AdamW beta2 + Muon beta2) can produce synergistic improvements when each is individually at the noise floor; exploration has deeply saturated — 75 consecutive discards after the last keep indicates all low-hanging fruit has been found; periodic MPS empty_cache fights GPU memory fragmentation on Apple Silicon.
+**Key discoveries**: removing weight decay was a major win for small models; Muon optimizer benefits from tuning ns_steps per matrix shape; learning rates shift higher in the no-WD regime; value embeddings (alternating layers) are critical for quality; schedule parameters have cascading effects — tuning one unlocks better optima for others; combining two individually-marginal changes (AdamW beta2 + Muon beta2) can produce synergistic improvements when each is individually at the noise floor; exploration has deeply saturated — 75 consecutive discards after the last keep indicates all low-hanging fruit has been found; periodic MPS empty_cache fights GPU memory fragmentation on Apple Silicon; **MPS pipeline optimization** (reducing sync frequency, caching masks, pre-allocating optimizer scalars on device) yields +4.4% more steps; **bfloat16 autocast on MPS** yields +21% more steps — Apple Silicon has fast bf16 matmul hardware at transformer-relevant sizes but float16 overflows at high learning rates.
 
 ---
 
@@ -301,5 +301,43 @@ val_bpb improved significantly (1.028 vs 1.070, a 3.9% drop — the largest sing
 | Emerging reasoning | better | Sky uses temporal framing ("discovered in 1929"); robot attributes claims to a named expert with institutional affiliation; math attempts logical structure with "in contrast" and "this means that" |
 
 val_bpb improved to 1.015 (from 1.028, a 1.3% drop). The chat responses show notable improvements over the 14.5h model. The most striking development is coherency: the sky answer invents and maintains a consistent fictional concept ("The Chirping Cushion"), the robot answer constructs a believable interview format with a named expert ("Raymond Cherry, anthropologist at Stanford"), and the math answer attempts sustained algebraic reasoning. The repetition loops from 14.5h are gone. The model is learning to maintain narrative threads and attribute ideas to sources — hallucinated, but structurally sophisticated. The gap between val_bpb improvement and SFT quality has narrowed: 3.1h of additional pretraining produced both measurable and visible gains.
+
+---
+
+## Human exploration · 2026-03-23 · MPS pipeline optimization + bfloat16 autocast
+
+**Not a deep-train** — this entry documents two human-identified optimizations to the training infrastructure that improve throughput on Apple Silicon.
+
+### Background
+
+At 17.6h accumulated pretraining, GPU utilization was 99% but training was slower than expected. Investigation revealed the bottleneck wasn't memory (only 40GB of 64GB used) but GPU pipeline stalls: frequent `torch.mps.synchronize()` calls flushing the Metal command queue, per-step CPU→GPU scalar transfers in the optimizer, unnecessary tensor allocations, and no mixed-precision computation.
+
+### Exp257: MPS pipeline fixes (val_bpb 1.2983, +4.4% steps)
+
+Five changes to reduce GPU pipeline stalls:
+
+1. **Sync every 10 steps** instead of every step — reduces `torch.mps.synchronize()` calls by 90%, allowing the GPU pipeline to stay full
+2. **Cache sliding window attention mask** — avoid re-allocating a T×T boolean tensor per layer per micro-step
+3. **Pre-allocate optimizer scalar tensors on MPS device** — eliminates 10+ CPU→GPU micro-transfers per step
+4. **Skip `repeat_interleave` when GQA ratio=1** — the model uses n_head == n_kv_head, so GQA expansion was copying tensors for a factor of 1
+5. **Reduce `empty_cache` frequency** from every 50 steps to every 200 — fewer forced MPS synchronization points
+
+Result: 848 steps vs 812 baseline in 5 minutes (+4.4%), val_bpb 1.2983 vs 1.3045.
+
+### Exp258: bfloat16 autocast (val_bpb 1.2823, +21% steps)
+
+Enabled `torch.amp.autocast(device_type="mps", dtype=torch.bfloat16)` for the forward pass. This is the biggest single throughput improvement in the project's history.
+
+**Why bfloat16 and not float16**: float16 (max 65504) overflows at the model's high learning rates — training diverged to NaN at step 172. bfloat16 has the same exponent range as float32 (max ~3.4e38) so it's numerically safe, and Apple Silicon M5 has fast bfloat16 matmul hardware at transformer-relevant sizes (3.9x faster than float32 at 4096×1024).
+
+**A/B/C test results (5-minute explore runs, depth=4)**:
+
+| Metric | A: Baseline | B: Fixes 1-5 | C: Fixes 1-5 + bf16 |
+|---|---|---|---|
+| val_bpb | 1.3045 | 1.2983 | **1.2823** |
+| Steps | 812 | 848 | **981** |
+| MFU | 0.50% | 0.52% | **0.61%** |
+
+Checkpoint-compatible: autocast only affects computation during the forward pass. Weights remain float32 in memory and on disk. Existing checkpoints load and resume without changes.
 
 ---

@@ -93,6 +93,17 @@ class CausalSelfAttention(nn.Module):
         self.c_proj = nn.Linear(self.n_embd, self.n_embd, bias=False)
         self.ve_gate_channels = 8
         self.ve_gate = nn.Linear(self.ve_gate_channels, self.n_kv_head, bias=False) if has_ve(layer_idx, config.n_layer) else None
+        self._cached_window_mask = None
+        self._cached_window_key = None
+
+    def _get_window_mask(self, T, window, device):
+        key = (T, window)
+        if self._cached_window_key != key:
+            mask = torch.ones(T, T, dtype=torch.bool, device=device).tril()
+            mask = mask.triu(diagonal=1 - window)
+            self._cached_window_mask = mask
+            self._cached_window_key = key
+        return self._cached_window_mask
 
     def forward(self, x, ve, cos_sin, window_size):
         B, T, C = x.size()
@@ -111,9 +122,11 @@ class CausalSelfAttention(nn.Module):
         q, k = norm(q), norm(k)
 
         # PyTorch SDPA without FlashAttention 3
-        # Expand heads for KV based on GQA
-        k = k.repeat_interleave(self.n_head // self.n_kv_head, dim=2)
-        v = v.repeat_interleave(self.n_head // self.n_kv_head, dim=2)
+        # Expand heads for KV based on GQA (skip if ratio=1)
+        gqa_ratio = self.n_head // self.n_kv_head
+        if gqa_ratio > 1:
+            k = k.repeat_interleave(gqa_ratio, dim=2)
+            v = v.repeat_interleave(gqa_ratio, dim=2)
         
         # Transpose to [B, H, T, D]
         q = q.transpose(1, 2)
@@ -123,9 +136,7 @@ class CausalSelfAttention(nn.Module):
         # Apply mask for sliding window
         window = window_size[0]
         if window > 0 and window < T:
-            # Mask out tokens outside the window
-            mask = torch.ones(T, T, dtype=torch.bool, device=q.device).tril()
-            mask = mask.triu(diagonal=1 - window)
+            mask = self._get_window_mask(T, window, q.device)
             y = F.scaled_dot_product_attention(q, k, v, attn_mask=mask)
         else:
             y = F.scaled_dot_product_attention(q, k, v, is_causal=True)
@@ -348,13 +359,13 @@ polar_express_coeffs = [
 
 
 def adamw_step_fused(p, grad, exp_avg, exp_avg_sq, step_t, lr_t, beta1_t, beta2_t, eps_t, wd_t):
-    # Move scalars to correct device and dtype
-    step_t = step_t.to(device=p.device, dtype=p.dtype)
-    lr_t = lr_t.to(device=p.device, dtype=p.dtype)
-    beta1_t = beta1_t.to(device=p.device, dtype=p.dtype)
-    beta2_t = beta2_t.to(device=p.device, dtype=p.dtype)
-    eps_t = eps_t.to(device=p.device, dtype=p.dtype)
-    wd_t = wd_t.to(device=p.device, dtype=p.dtype)
+    # Cast dtype only (already on correct device)
+    step_t = step_t.to(dtype=p.dtype)
+    lr_t = lr_t.to(dtype=p.dtype)
+    beta1_t = beta1_t.to(dtype=p.dtype)
+    beta2_t = beta2_t.to(dtype=p.dtype)
+    eps_t = eps_t.to(dtype=p.dtype)
+    wd_t = wd_t.to(dtype=p.dtype)
     
     p.mul_(1 - lr_t * wd_t)
     exp_avg.lerp_(grad, 1 - beta1_t)
@@ -368,11 +379,11 @@ def adamw_step_fused(p, grad, exp_avg, exp_avg_sq, step_t, lr_t, beta1_t, beta2_
 
 def muon_step_fused(stacked_grads, stacked_params, momentum_buffer, second_momentum_buffer,
                     momentum_t, lr_t, wd_t, beta2_t, ns_steps, red_dim):
-    # Move scalars to correct device and dtype
-    momentum_t = momentum_t.to(device=stacked_params.device, dtype=stacked_params.dtype)
-    lr_t = lr_t.to(device=stacked_params.device, dtype=stacked_params.dtype)
-    wd_t = wd_t.to(device=stacked_params.device, dtype=stacked_params.dtype)
-    beta2_t = beta2_t.to(device=stacked_params.device, dtype=stacked_params.dtype)
+    # Cast dtype only (already on correct device)
+    momentum_t = momentum_t.to(dtype=stacked_params.dtype)
+    lr_t = lr_t.to(dtype=stacked_params.dtype)
+    wd_t = wd_t.to(dtype=stacked_params.dtype)
+    beta2_t = beta2_t.to(dtype=stacked_params.dtype)
 
     # Nesterov momentum
     momentum = momentum_t.to(stacked_grads.dtype)
@@ -420,17 +431,18 @@ class MuonAdamW(torch.optim.Optimizer):
 
     def __init__(self, param_groups):
         super().__init__(param_groups, defaults={})
-        # 0-D CPU tensors to avoid torch.compile recompilation when values change
-        self._adamw_step_t = torch.tensor(0.0, dtype=torch.float32, device="cpu")
-        self._adamw_lr_t = torch.tensor(0.0, dtype=torch.float32, device="cpu")
-        self._adamw_beta1_t = torch.tensor(0.0, dtype=torch.float32, device="cpu")
-        self._adamw_beta2_t = torch.tensor(0.0, dtype=torch.float32, device="cpu")
-        self._adamw_eps_t = torch.tensor(0.0, dtype=torch.float32, device="cpu")
-        self._adamw_wd_t = torch.tensor(0.0, dtype=torch.float32, device="cpu")
-        self._muon_momentum_t = torch.tensor(0.0, dtype=torch.float32, device="cpu")
-        self._muon_lr_t = torch.tensor(0.0, dtype=torch.float32, device="cpu")
-        self._muon_wd_t = torch.tensor(0.0, dtype=torch.float32, device="cpu")
-        self._muon_beta2_t = torch.tensor(0.0, dtype=torch.float32, device="cpu")
+        # 0-D tensors on target device to avoid CPU→GPU transfers every step
+        _dev = device
+        self._adamw_step_t = torch.tensor(0.0, dtype=torch.float32, device=_dev)
+        self._adamw_lr_t = torch.tensor(0.0, dtype=torch.float32, device=_dev)
+        self._adamw_beta1_t = torch.tensor(0.0, dtype=torch.float32, device=_dev)
+        self._adamw_beta2_t = torch.tensor(0.0, dtype=torch.float32, device=_dev)
+        self._adamw_eps_t = torch.tensor(0.0, dtype=torch.float32, device=_dev)
+        self._adamw_wd_t = torch.tensor(0.0, dtype=torch.float32, device=_dev)
+        self._muon_momentum_t = torch.tensor(0.0, dtype=torch.float32, device=_dev)
+        self._muon_lr_t = torch.tensor(0.0, dtype=torch.float32, device=_dev)
+        self._muon_wd_t = torch.tensor(0.0, dtype=torch.float32, device=_dev)
+        self._muon_beta2_t = torch.tensor(0.0, dtype=torch.float32, device=_dev)
         
         # Compile conditionally
         compiler_kwargs = {"dynamic": False, "fullgraph": True}
@@ -542,8 +554,7 @@ if device_type == "cuda":
 elif device_type == "cpu":
     autocast_ctx = torch.amp.autocast(device_type="cpu", dtype=torch.bfloat16)
 else:
-    import contextlib
-    autocast_ctx = contextlib.nullcontext()
+    autocast_ctx = torch.amp.autocast(device_type="mps", dtype=torch.bfloat16)
 
 H100_BF16_PEAK_FLOPS = 989.5e12
 
@@ -686,9 +697,15 @@ def sync_device(device_type):
     elif device_type == "mps":
         torch.mps.synchronize()
 
+_SYNC_INTERVAL = 10  # sync every N steps to reduce MPS pipeline stalls
+_sync_t0 = time.time()
+_sync_step0 = 0
+
 while True:
-    sync_device(device_type)
-    t0 = time.time()
+    if step % _SYNC_INTERVAL == 0:
+        sync_device(device_type)
+        _sync_t0 = time.time()
+        _sync_step0 = step
     for micro_step in range(grad_accum_steps):
         with autocast_ctx:
             loss = model(x, y)
@@ -718,9 +735,13 @@ while True:
         print("FAIL")
         exit(1)
 
-    sync_device(device_type)
-    t1 = time.time()
-    dt = t1 - t0
+    # Sync and measure time every _SYNC_INTERVAL steps (reduces MPS pipeline flushes)
+    if (step + 1) % _SYNC_INTERVAL == 0 or step <= 10:
+        sync_device(device_type)
+        t1 = time.time()
+        dt = (t1 - _sync_t0) / max(1, step + 1 - _sync_step0)  # average dt per step
+    else:
+        dt = (time.time() - _sync_t0) / max(1, step + 1 - _sync_step0)  # estimate without sync
 
     # Load next batch outside timed region (prevents I/O stalls eating compute budget)
     x, y, epoch = next(train_loader)
@@ -767,7 +788,7 @@ while True:
         gc.collect()
 
     # Periodic MPS cache cleanup to prevent memory fragmentation slowdown
-    if device_type == "mps" and step > 0 and step % 50 == 0:
+    if device_type == "mps" and step > 0 and step % 200 == 0:
         torch.mps.empty_cache()
 
     step += 1

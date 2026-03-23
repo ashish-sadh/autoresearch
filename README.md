@@ -18,7 +18,7 @@ The system has two loops. The explore loop runs 24/7, trying ~12 experiments per
 
 ## What the agent explored
 
-Over 248 experiments, the agent autonomously searched across learning rates, schedules, architecture, optimizers, and more. Most experiments fail — only 17% of changes actually improved the model. But the ones that worked compounded.
+Over 253 experiments (248 autonomous + 5 human-identified), the agent and human searched across learning rates, schedules, architecture, optimizers, and MPS pipeline tuning. Most experiments fail — only 17% of changes actually improved the model. But the ones that worked compounded.
 
 ![Experiment categories](screenshots/categories.png)
 
@@ -105,6 +105,8 @@ What I added on top:
 - Value embeddings on alternating layers are critical for quality
 - Schedule parameters have cascading effects — tuning one unlocks better optima for others
 - Combining two individually-marginal optimizer changes can produce synergistic improvements
+- **bfloat16 autocast on MPS** yields +21% more steps — Apple Silicon M5 has fast bf16 matmul hardware at transformer sizes (3.9x vs float32); float16 overflows at high LRs but bf16 shares float32's exponent range
+- **MPS pipeline optimization** (sync every 10 steps, cache masks, optimizer scalars on-device) yields +4.4% more steps by reducing GPU pipeline stalls
 
 ## Files
 
