@@ -57,9 +57,9 @@ def parse_blog_entries():
             continue
         val_bpb = float(bpb_match.group(1))
 
-        # Extract hours as int
+        # Extract hours (keep float precision for non-integer hours like 14.5h)
         hours_float = float(hours_str.replace('h', ''))
-        hours_int = int(hours_float)
+        hours_label = f'{hours_float:g}h'  # "7h" for 7.0, "14.5h" for 14.5
 
         # Extract responses for each question
         responses = {}
@@ -74,8 +74,8 @@ def parse_blog_entries():
                 responses[key] = m.group(1).strip()
 
         entries.append({
-            'hours': hours_int,
-            'hours_str': f'{hours_int}h',
+            'hours': hours_float,
+            'hours_str': hours_label,
             'val_bpb': val_bpb,
             'bpb_str': f'{val_bpb:.3f}',
             'responses': responses,
