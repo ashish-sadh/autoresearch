@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 249 · **Kept**: 40 · **Discarded**: 193 · **Crashes**: 0
-**Deep-train sessions**: 8 · **Accumulated pretraining**: 14.5h
+**Total experiments**: 251 · **Kept**: 40 · **Discarded**: 193 · **Crashes**: 0
+**Deep-train sessions**: 9 · **Accumulated pretraining**: 17.6h
 **Best explore val_bpb**: 1.286900
 
 **Top 5 highest-impact experiments**
@@ -271,5 +271,35 @@ val_bpb improved to 1.070 (from 1.086, a 1.5% drop). The most striking developme
 | Emerging reasoning | same | Numbered lists, bold headers, rhetorical structure present but no actual causal reasoning; robot repetition loop is a regression |
 
 val_bpb improved significantly (1.028 vs 1.070, a 3.9% drop — the largest single-session improvement yet). However, the SFT chat responses don't show clear improvement over the 7h model. The sky answer is longer and mentions relevant terms (blue, light, horizon) but constructs nonsensical explanations around them. The robot answer gets caught in a repetition loop — a new failure mode. The math response remains completely off-topic. The disconnect between val_bpb improvement and SFT quality suggests the base model is improving (better next-token prediction) but the instruction-following capability needs more pretraining data or SFT tuning to translate into coherent responses. This is the first deep-train where doubling pretraining hours (7h→14.5h) didn't produce visible chat quality gains, though the underlying model is measurably better.
+
+---
+
+## #9 · 2026-03-23 01:30 · 17.6h accumulated pretraining
+
+**val_bpb**: 1.014974 · **model**: depth=16, 1024-dim · ~285M params · 17.6h pretraining
+
+**Last 5 improvements**: Same as entry #8 — no new explore keeps. This is a continuation of the 13h extended deep-train session (stopped at 17.6h total to checkpoint progress, with ~5.4h of training added on top of the 14.5h checkpoint). Training was split into B=8 (first 7.5h, heavy MPS stalls) and B=4 (remaining 3.1h, much cleaner). The explore loop remains saturated at 75+ consecutive discards.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> This can be a challenge, but it's not as daunting as you'd like to think. Let's take a moment for a more thought-provoking explanation of this phenomenon: The Chirping Cushion: A star that explodes from above into its original form, and the sky is blue. This was discovered in 1929 after a total of five years. Astronomers at the time have been seeking to understand why stars are blue when they're not super stars. However, it's still unclear how these two mysteries relate to their own behavior. The Chirping Cushion (Synopsis) is a star that explodes from above into its original form and continues in that direction until the peak of its transformation occurs. This beautifully preserved moment, which has been revealing new insights about why stars are blue, has allowed us to uncover secrets hidden deep underwater.
+
+*Q: What is 2 + 2 and why?*
+> The answer to this question is a simplified explanation. While the basic idea of 2 = 2, we can consider that there are two values: "a" (b) or "c", where b is the length of time between each side. In contrast, if both sides have similar units and can be defined by their own formula, then at least one value for this unit is given as +1.5 per -2*(*). This means that there are two values in 2 = (a) or "c", where b is the length of time between them. Example: if both sides have a similar units and can be defined by their own formula, then there's one value for this unit as +1.5 per -2*(*), which means that when they're equal, they get 0 (or more).
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> What does it learn from the experience? Is there something else that will bring him down, say? "You've been given some time for a brief analysis of what is happening around you," says Raymond Cherry, anthropologist and professor at Stanford University School of Medicine in Los Angeles. "It's important to consider the potential risks when looking at this robot." Cherry notes that "this study could help us identify opportunities for improving our understanding of how robots interact with humans." "I think it should be a challenge," says Cherry, who has spent much time as anthropologist and professor in Stanford's School of Medicine. "It might also teach us valuable lessons about robotics to grow up a new generation of explorers."
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce fluent, well-punctuated prose with complex sentence structures |
+| Coherency | better | Sky invents a consistent narrative ("The Chirping Cushion") and maintains it; robot builds a coherent interview with "Raymond Cherry" throughout; math attempts formal notation consistently |
+| Topic follow-through | better | Sky explicitly says "the sky is blue" and "why stars are blue"; robot discusses "how robots interact with humans" and "robotics research"; math attempts algebraic framing of "2 = 2" |
+| Emerging reasoning | better | Sky uses temporal framing ("discovered in 1929"); robot attributes claims to a named expert with institutional affiliation; math attempts logical structure with "in contrast" and "this means that" |
+
+val_bpb improved to 1.015 (from 1.028, a 1.3% drop). The chat responses show notable improvements over the 14.5h model. The most striking development is coherency: the sky answer invents and maintains a consistent fictional concept ("The Chirping Cushion"), the robot answer constructs a believable interview format with a named expert ("Raymond Cherry, anthropologist at Stanford"), and the math answer attempts sustained algebraic reasoning. The repetition loops from 14.5h are gone. The model is learning to maintain narrative threads and attribute ideas to sources — hallucinated, but structurally sophisticated. The gap between val_bpb improvement and SFT quality has narrowed: 3.1h of additional pretraining produced both measurable and visible gains.
 
 ---

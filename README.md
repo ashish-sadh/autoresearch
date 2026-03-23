@@ -38,6 +38,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 | 6h | 1.086 | Fluent, well-punctuated | Sky mentions "scattering" | Robot discusses "navigating life using senses" | Numbered categorization with descriptions |
 | 7h | 1.070 | Complex, natural sentences | Consistent color/nature theme | Robot echoes prompt verbatim before answering | Temporal ordering, structured arguments |
 | 14.5h | 1.028 | Fluent with bold/list formatting | Invents concepts ("Blue Dance"); repetition loops | Sky mentions blue/light/horizon; robot echoes prompt but loops | Numbered lists, bold headers; no causal reasoning yet |
+| 17.6h | 1.015 | Complex, natural prose | Maintains invented narratives ("Chirping Cushion", "Raymond Cherry") | Sky explains "why stars are blue"; robot discusses robotics research | Temporal framing, expert attribution, "in contrast" logic |
 
 **Notable milestones:**
 - **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
@@ -46,6 +47,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 - **6h**: Physics-adjacent concept "scattering" appears in sky answer
 - **7h**: Model explicitly echoes user's question before attempting to answer
 - **14.5h**: val_bpb breaks below 1.03; base model measurably better but SFT responses plateau — first sign that chat quality needs more than just pretraining hours
+- **17.6h**: Model invents and maintains fictional narratives; constructs believable interview format with named experts; repetition loops resolved
 
 ### Benchmark responses over time
 

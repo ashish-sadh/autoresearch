@@ -248,3 +248,5 @@ c61e4c5	1.318209	0.0	keep	Exp255: periodic MPS empty_cache every 50 steps (infra
 25e8bd0	1.321866	0.0	discard	Exp256: MATRIX_LR 0.080→0.090 (worse even in throttled regime)
 09d1631	1.028352	0.0	deep-train	14.5h accum pretraining d16 1024-dim; 6875 steps
 09d1631	0.000000	0.0	deep-train	SFT on 14.5h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
+09c7764	1.014974	0.0	deep-train	17.6h accum pretraining d16 1024-dim; 8154 steps
+09c7764	0.000000	0.0	deep-train	SFT on 17.6h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
