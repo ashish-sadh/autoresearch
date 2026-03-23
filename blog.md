@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 253 · **Kept**: 42 · **Discarded**: 193 · **Crashes**: 0
-**Deep-train sessions**: 9 · **Accumulated pretraining**: 17.6h
+**Total experiments**: 255 · **Kept**: 42 · **Discarded**: 193 · **Crashes**: 0
+**Deep-train sessions**: 10 · **Accumulated pretraining**: 20.0h
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -339,5 +339,35 @@ Enabled `torch.amp.autocast(device_type="mps", dtype=torch.bfloat16)` for the fo
 | MFU | 0.50% | 0.52% | **0.61%** |
 
 Checkpoint-compatible: autocast only affects computation during the forward pass. Weights remain float32 in memory and on disk. Existing checkpoints load and resume without changes.
+
+---
+
+## #10 · 2026-03-23 09:00 · 20.0h accumulated pretraining
+
+**val_bpb**: 1.005734 · **model**: depth=16, 1024-dim · ~285M params · 20.0h pretraining
+
+**Last 5 improvements**: bfloat16 autocast on MPS (+21% throughput, human-identified); MPS pipeline fixes (+4.4% throughput, human-identified); periodic MPS empty_cache (agent-identified infra fix). This session completes the original 13h deep-train budget, bringing accumulated training from 7h → 20h. The bf16 autocast enabled ~4.3s/step (up from 6.9s), though MPS stalls from competing GPU processes remained a challenge throughout.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> (See "All colors are: light, dark, yellow, violet, and gray hues.") Trending: 1) What color are you using in your daylight hours? 2) Using a mix of different wavelengths. 3) Comparing various absorption techniques such as red-radiation with blue-green difference between primary colors (red, yellow), orange, and white). 4) What types of shadows do you use for the day light? 5) Comparing different wavelengths. 6) Using a mix of colors with blue-green and orange in your Daylight hours. 7) Cooling down on days 10-30 for the day light. 8) RGB lighting, such as lamp blue, studio green, or glow-in-the-wall (RGI). 9) Dark colors with darker hues in your Daylight hours. 10) Hypoisobuty's full day light is indeed the same color that you are using in your Daylight hours. All other wavelengths of sunlight work equally well together.
+
+*Q: What is 2 + 2 and why?*
+> Assuming you're a fan of the "best" type of music, but not on any "pure" or "numbered," we'll dive deep into this topic. Our answer lies in its simplicity – it's often written as "2 + 2." This article will delve into understanding these fundamental concepts and exploring their significance: 1. **Best**: The essence of the "best" type of music is that you're not just a musician but also an entrepreneur who brings your ideas to life. 2. **Types**: The concept of types in this context involves the idea that you're not just musicians but also an entrepreneur who brings your ideas to life. 3. **Metric**: The metric system is a fundamental concept in the "best" type of music. It's used by artists to measure success rates and motivation levels. 4. **Optical**: A unit for decoding words.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> You'd like it to be an active human being or something that feels different from the character of a real person. I'm writing my first comment, but I don't know much about this machine. It's designed specifically for both hands and fingers, so they're not necessarily interested in making things more interesting. It has two heads: it can sense objects (like a balloon), which is an active robot, while the character of a real person feels differently from that of its surroundings. The head can be shaped to fit into the shape of your fingers and eyes like a ball with a large size or weighted lips. A friend of mine has made this machine for me: she used it in her first comment, and I have been using several words from youtube videos. The voice is almost like an apple pie! This robot was actually inspired to make things more interesting by the actor's body shape.
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce fluent, well-structured prose with numbered lists and bold formatting |
+| Coherency | worse | Sky produces a disconnected FAQ-style list instead of a narrative; math drifts into music/entrepreneurship; robot mixes body parts and balloons incoherently |
+| Topic follow-through | better | Sky mentions "wavelengths", "absorption", "RGB lighting", "primary colors" — first time physics-adjacent vocabulary dominates the response; math references "2 + 2" repeatedly |
+| Emerging reasoning | same | Numbered lists with categories; sky attempts a systematic comparison format; math defines terms with bold headers; no actual causal reasoning |
+
+val_bpb broke below 1.01 for the first time (1.006 vs 1.015, a 0.9% drop). The 20h model shows a shift in response style: the sky answer now uses physics-adjacent vocabulary (wavelengths, absorption, RGB, primary colors) in a FAQ/listicle format — less narrative coherency than the 17.6h "Chirping Cushion" story but more topically relevant content. The math answer still completely misses the arithmetic but wraps it in a structured article format. The robot story introduces a first-person narrator and physical descriptions of the machine — more immersive but less coherent than the 17.6h interview format. The model appears to be transitioning from narrative-style responses to information-style responses as it absorbs more web text patterns, trading coherency for topical relevance.
 
 ---
