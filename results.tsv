@@ -266,3 +266,5 @@ dd8878d	1.306350	0.0	discard	Exp263: DEPTH 4→5 (565 steps; depth cost still > 
 2c055c3	1.299058	0.0	discard	Exp268: Muon momentum warmup 150→200 (worse; 150 confirmed for bf16)
 7fcf7c4	0.989722	0.0	deep-train	25.0h accum pretraining d16 1024-dim; 9755 steps
 7fcf7c4	0.000000	0.0	deep-train	SFT on 25.0h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
+679376c	0.992017	0.0	deep-train	30.0h accum pretraining d16 1024-dim; 10466 steps
+679376c	0.000000	0.0	deep-train	SFT on 30.0h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev

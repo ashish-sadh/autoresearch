@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 269 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 11 · **Accumulated pretraining**: 25.0h
+**Total experiments**: 271 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
+**Deep-train sessions**: 12 · **Accumulated pretraining**: 30.0h
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -399,5 +399,35 @@ val_bpb broke below 1.01 for the first time (1.006 vs 1.015, a 0.9% drop). The 2
 | Emerging reasoning | better | Sky uses causal language: "due to the fact that", "as a result of", "could cause a sudden shift in wavelength"; robot discusses cause-effect of learning on behavior; math defines numbered systems building on each other |
 
 val_bpb broke below 1.0 for the first time (0.990 vs 1.006, a 1.7% drop). The chat responses show the most significant quality jump in several entries. The sky answer is the best yet — it discusses sunlight being "reflected back into space", "shift in wavelength", and "visible light rays over shorter distances", which are all physics-adjacent concepts relevant to Rayleigh scattering. The robot answer discusses robots learning on "different surfaces, environments, and even seemingly impossible tasks" and connecting with humans — the most coherent and on-topic robot response to date. The math answer, while still wrong, stays consistently within an acoustics/resonance domain and builds numbered definitions that reference each other. The model is clearly developing stronger coherency and topical grounding as pretraining hours accumulate.
+
+---
+
+## #12 · 2026-03-24 11:00 · 30.0h accumulated pretraining
+
+**val_bpb**: 0.992017 · **model**: depth=16, 1024-dim · ~285M params · 30.0h pretraining
+
+**Last 5 improvements**: Same as #11 — no new explore keeps. 5h deep-train loop continuing per steering notes. val_bpb essentially flat from 25h (0.990→0.992), suggesting diminishing returns at this model capacity.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> We can see that it's a natural day, or even a dark night. The most common cause of this phenomenon are artificial lighting and other activities such as ambient light, which has been designed to create shadows. Differential calculation of the sky can occur because of natural conditions like sunlight exposure and other factors. 1. Sight dimming: This is a phenomenon whereby light rays travel through an object or surface, creating shadows that cast doubt on the surroundings. 2. Hue contrasting colors: When we categorize blue as artificial, it's essential to distinguish between different primary colors and their sources. We'll find out if each color is more or less in a particular shade of blue (e.g., red for sunlight), which can help us identify the depths where these blues are more intense. 3. Sound contrasting patterns: When we categorize certain objects, such as stars or planets, we need to distinguish between them as colors that are deep and darker than those found in other wavelengths of light.
+
+*Q: What is 2 + 2 and why?*
+> The answer to this question is "it depends on the relationship between two or more values of a given x-coefficient (x^2). For example, if X = {1/2}(y)=4.8kg then X + 5 = <3 kg. To help you understand the significance of this answer to begin with, let's first consider what "currency" is and why it holds for values between x^2 and 2 + - 1/2}. The purpose here is to define $x$ as a value that represents an average amount of time. To calculate $\left( {X^3: \frac{4kg}{0}$)##, we first consider the relation between X and Y.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> Do you know what it's like when robots are left learning by themselves? Nearly all of us have ever heard some kind of feeling that can be heard or seen in our everyday lives, and if we had this emotional feeling, then would we even imagine ourselves as humans? The world is a complex interplay between reality and technology. In this article we will explore what it's like when robots are left learning by themselves, how they learn to feel, their physical strength, their emotions, or whether it may be a challenge for us to appreciate them. So let's get started on this journey together! Did you know that we are learning by ourselves? This sensation can be seen when...
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce fluent, well-structured prose |
+| Coherency | same | Sky maintains a light/color science theme; robot stays on learning/feeling; math stays in algebra — similar to 25h |
+| Topic follow-through | same | Sky discusses "light rays", "primary colors", "wavelengths"; robot discusses "learning to feel", "emotions" — comparable to 25h |
+| Emerging reasoning | same | Numbered categorization; math attempts LaTeX notation and Python code; no new reasoning patterns |
+
+val_bpb is essentially flat (0.992 vs 0.990 — within noise). The chat responses are comparable to the 25h model with no notable improvements. The sky answer uses "light rays", "primary colors", "wavelengths" — similar vocabulary to 25h. The robot answer opens with an engaging rhetorical question but doesn't advance beyond the 25h quality level. The math answer attempts both LaTeX and Python code formatting, which is new, but the content is still nonsensical. This confirms the model is approaching diminishing returns at 285M params — additional pretraining hours produce measurable but not visible improvements. The next quality leap likely requires either a larger model or improved SFT.
 
 ---
