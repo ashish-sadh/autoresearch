@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 255 · **Kept**: 42 · **Discarded**: 193 · **Crashes**: 0
-**Deep-train sessions**: 10 · **Accumulated pretraining**: 20.0h
+**Total experiments**: 269 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
+**Deep-train sessions**: 11 · **Accumulated pretraining**: 25.0h
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -369,5 +369,35 @@ Checkpoint-compatible: autocast only affects computation during the forward pass
 | Emerging reasoning | same | Numbered lists with categories; sky attempts a systematic comparison format; math defines terms with bold headers; no actual causal reasoning |
 
 val_bpb broke below 1.01 for the first time (1.006 vs 1.015, a 0.9% drop). The 20h model shows a shift in response style: the sky answer now uses physics-adjacent vocabulary (wavelengths, absorption, RGB, primary colors) in a FAQ/listicle format — less narrative coherency than the 17.6h "Chirping Cushion" story but more topically relevant content. The math answer still completely misses the arithmetic but wraps it in a structured article format. The robot story introduces a first-person narrator and physical descriptions of the machine — more immersive but less coherent than the 17.6h interview format. The model appears to be transitioning from narrative-style responses to information-style responses as it absorbs more web text patterns, trading coherency for topical relevance.
+
+---
+
+## #11 · 2026-03-24 07:00 · 25.0h accumulated pretraining
+
+**val_bpb**: 0.989722 · **model**: depth=16, 1024-dim · ~285M params · 25.0h pretraining
+
+**Last 5 improvements**: Same as entry #10 — no new explore keeps (10 consecutive discards triggered this deep-train per steering notes). The explore loop is deeply saturated; all hyperparameter changes in the bf16 regime produced worse results. This 5h deep-train session ran with bfloat16 autocast and MPS pipeline optimizations.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> Brown's explanation suggests that it's because there was a massive black cloud floating above us at some point in time when we were observing something called "sunlight" in our solar system. This phenomenon appears to be due to the fact that sunlight is reflected back into space from higher levels than previously thought. As for any other direction, this process would also happen as a result of the presence of energy. The answer lies within its potential impact on astronomy and astrophysics. The phenomenon may have been observed at some point in time relative to our solar system when we were observing something called "sunlight" or some other form of light reflected back into space from higher sources. This idea is thought to be due to the fact that it could cause a sudden shift in wavelength, causing visible light rays over shorter distances.
+
+*Q: What is 2 + 2 and why?*
+> (Original post by Jacobs) 2: A sonic combination of the two main components, a resonance device that produces a high frequency response in a wide range of frequencies. The sound vibrations created through 2 drive systems are similar, but with different characteristics. This system is known as "cooling" and hence can be described by the same name. 3: A resonance device that produces high frequency response in a wide range of frequencies. It uses vibrations created through 2 drive systems and converts them into low-frequency levels, such as xenon or pistons. 4: A resonance device that produces a large frequency response with different characteristics and uses vibrations created through 2 drive systems. This system is known as "trumpet" or "model".
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> This is an exciting and educational tool that could help you understand the world around you. The robots learned were trained on different surfaces, environments, and even seemingly impossible tasks like walking or running. They also learn how we interact with others by acting as if our actions are just one of many ways we can be part of a group. This allows us to make sense of what is truly up-to-date in the world. This helps people understand their needs better and shows that they're always there when it's time for them to spend more time with others. It also gives you an opportunity to connect with other robots like yours, which can lead to personal growth, self-improvement, or even social interaction issues.
+
+**Quality assessment vs previous entry**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce fluent, complex prose with natural punctuation |
+| Coherency | better | Sky maintains a consistent astronomy/physics narrative about sunlight reflection; robot discusses training and social interaction coherently; math stays in one domain (acoustics/resonance) |
+| Topic follow-through | better | Sky discusses "sunlight", "wavelength", "visible light rays", "reflected back into space" — closest to a correct explanation yet; robot discusses learning, adapting, and interacting with humans |
+| Emerging reasoning | better | Sky uses causal language: "due to the fact that", "as a result of", "could cause a sudden shift in wavelength"; robot discusses cause-effect of learning on behavior; math defines numbered systems building on each other |
+
+val_bpb broke below 1.0 for the first time (0.990 vs 1.006, a 1.7% drop). The chat responses show the most significant quality jump in several entries. The sky answer is the best yet — it discusses sunlight being "reflected back into space", "shift in wavelength", and "visible light rays over shorter distances", which are all physics-adjacent concepts relevant to Rayleigh scattering. The robot answer discusses robots learning on "different surfaces, environments, and even seemingly impossible tasks" and connecting with humans — the most coherent and on-topic robot response to date. The math answer, while still wrong, stays consistently within an acoustics/resonance domain and builds numbered definitions that reference each other. The model is clearly developing stronger coherency and topical grounding as pretraining hours accumulate.
 
 ---

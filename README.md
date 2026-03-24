@@ -40,6 +40,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 | 14.5h | 1.028 | Fluent with bold/list formatting | Invents concepts ("Blue Dance"); repetition loops | Sky mentions blue/light/horizon; robot echoes prompt but loops | Numbered lists, bold headers; no causal reasoning yet |
 | 17.6h | 1.015 | Complex, natural prose | Maintains invented narratives ("Chirping Cushion", "Raymond Cherry") | Sky explains "why stars are blue"; robot discusses robotics research | Temporal framing, expert attribution, "in contrast" logic |
 | 20h | 1.006 | Fluent with bold/numbered lists | FAQ-style lists replace narratives | Sky uses "wavelengths", "absorption", "RGB", "primary colors" | Systematic comparison format; term definitions with categories |
+| 25h | 0.990 | Fluent, complex prose | Consistent astronomy/physics narrative | Sky discusses "sunlight reflected", "wavelength shift", "visible light" | Causal language: "due to", "as a result of", "could cause" |
 
 **Notable milestones:**
 - **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
@@ -50,6 +51,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 - **14.5h**: val_bpb breaks below 1.03; base model measurably better but SFT responses plateau — first sign that chat quality needs more than just pretraining hours
 - **17.6h**: Model invents and maintains fictional narratives; constructs believable interview format with named experts; repetition loops resolved
 - **20h**: val_bpb breaks below 1.01; physics vocabulary ("wavelengths", "absorption", "RGB") appears in sky answer; response style shifts from narrative to information/listicle format
+- **25h**: val_bpb breaks below 1.0; sky discusses sunlight reflection and wavelength shifts — closest to correct physics yet; causal reasoning emerges ("due to", "as a result of")
 
 ### Benchmark responses over time
 
