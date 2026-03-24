@@ -6,7 +6,7 @@ This is an experiment to have the LLM do its own research.
 
 **Read this section before every experiment and after every deep-train.** The human may update it at any time to change priorities.
 
-_Current directive:_ Exploration has saturated — focus on **deep-training in 5-hour loops**. Run: `uv run train.py --time 18000 --resume --ckpt-name deeptrain_accum --depth 16 --device-batch-size 8 > deeptrain_accum.log 2>&1`. After each 5h deep-train completes, run SFT, update blog/README/screenshots, push to GitHub, then start the next 5h deep-train. Repeat until directed otherwise. Only explore if you find a keep within 3 experiments. If 3 consecutive discards, skip exploring and start the next deep-train instead.
+_Current directive:_ val_bpb has plateaued at 30h (0.992 vs 0.990 at 25h) — the 285M param model is near capacity. Focus on **longer SFT** to better extract capabilities from the base model. Run SFT with `--max-steps 2000` on the current 30h checkpoint. Compare benchmark responses to the 500-step SFT. If quality improves, adopt 2000 steps as the new default. Then resume deep-training if val_bpb is still improving, or explore SFT hyperparameters if pretraining has truly plateaued.
 
 ---
 
