@@ -254,3 +254,12 @@ c61e4c5	1.318209	0.0	keep	Exp255: periodic MPS empty_cache every 50 steps (infra
 7358a5f	1.282250	0.0	keep	Exp258 (human): bfloat16 autocast on MPS — 21% more steps, bf16 matmuls at transformer sizes
 935ce96	1.005734	0.0	deep-train	20.0h accum pretraining d16 1024-dim; 8885 steps
 935ce96	0.000000	0.0	deep-train	SFT on 20.0h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
+658bc55	1.294334	0.0	discard	Exp259: MATRIX_LR 0.090→0.080 (worse; 0.090 confirmed optimal for bf16 regime)
+7697035	1.294443	0.0	discard	Exp260: WARMDOWN_RATIO 0.15→0.20 (worse; 0.15 confirmed for bf16 regime)
+6b2a503	1.364770	0.0	discard	Exp261: EMBEDDING_LR 0.45→0.50 (468 steps; MPS stall; inconclusive)
+009dcf4	1.300969	0.0	discard	Exp262: SCALAR_LR 2.0→3.0 (worse; 2.0 confirmed optimal in bf16 regime)
+dd8878d	1.306350	0.0	discard	Exp263: DEPTH 4→5 (565 steps; depth cost still > bf16 speed gain)
+4fd381e	1.300556	0.0	discard	Exp264: Muon beta2 0.90→0.95 (worse; 0.90 confirmed in bf16 regime)
+1055b09	1.287910	0.0	discard	Exp265: MATRIX_LR 0.090→0.100 (marginal worse; 0.090 confirmed)
+7f071eb	1.292543	0.0	discard	Exp266: MATRIX_LR 0.090→0.095 (worse; 0.090 sharp optimum confirmed)
+60b8c6b	1.297571	0.0	discard	Exp267: FINAL_LR_FRAC 0.02→0.05 (worse; 0.02 confirmed optimal)
