@@ -6,7 +6,7 @@ This is an experiment to have the LLM do its own research.
 
 **Read this section before every experiment and after every deep-train.** The human may update it at any time to change priorities.
 
-_Current directive:_ val_bpb has plateaued at 30h (0.992 vs 0.990 at 25h) — the 285M param model is near capacity. Focus on **longer SFT** to better extract capabilities from the base model. Run SFT with `--max-steps 2000` on the current 30h checkpoint. Compare benchmark responses to the 500-step SFT. If quality improves, adopt 2000 steps as the new default. Then resume deep-training if val_bpb is still improving, or explore SFT hyperparameters if pretraining has truly plateaued.
+_Current directive:_ After completing the 2000-step SFT experiment (currently running), start a **single 20-hour continuous deep-train**: `uv run train.py --time 72000 --resume --ckpt-name deeptrain_accum --depth 16 --device-batch-size 4 > deeptrain_accum.log 2>&1`. Use B=4 to minimize MPS stalls. Do NOT run chat_web.py during training. After it completes (30h→50h accumulated, ~15% of Chinchilla-optimal), run SFT with `--max-steps 2000`, do full post-pipeline (blog/README/visuals/push), then assess whether to continue training or shift to SFT/architecture experiments.
 
 ---
 
