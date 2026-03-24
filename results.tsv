@@ -263,3 +263,4 @@ dd8878d	1.306350	0.0	discard	Exp263: DEPTH 4→5 (565 steps; depth cost still > 
 1055b09	1.287910	0.0	discard	Exp265: MATRIX_LR 0.090→0.100 (marginal worse; 0.090 confirmed)
 7f071eb	1.292543	0.0	discard	Exp266: MATRIX_LR 0.090→0.095 (worse; 0.090 sharp optimum confirmed)
 60b8c6b	1.297571	0.0	discard	Exp267: FINAL_LR_FRAC 0.02→0.05 (worse; 0.02 confirmed optimal)
+2c055c3	1.299058	0.0	discard	Exp268: Muon momentum warmup 150→200 (worse; 150 confirmed for bf16)
