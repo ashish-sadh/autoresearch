@@ -6,7 +6,9 @@ This is an experiment to have the LLM do its own research.
 
 **Read this section before every experiment and after every deep-train.** The human may update it at any time to change priorities.
 
-_Current directive:_ After completing the 2000-step SFT experiment (currently running), start a **single 20-hour continuous deep-train**: `uv run train.py --time 72000 --resume --ckpt-name deeptrain_accum --depth 16 --device-batch-size 8 > deeptrain_accum.log 2>&1`. Do NOT run chat_web.py during training (MPS stalls are caused by GPU contention, not memory — killing the UI is the fix). After it completes (30h→50h accumulated, ~15% of Chinchilla-optimal), run SFT with `--max-steps 2000`, do full post-pipeline (blog/README/visuals/push), then assess whether to continue training or shift to SFT/architecture experiments.
+_Current directive:_ Run a **continuous 30-hour deep-train**: `uv run train.py --time 108000 --resume --ckpt-name deeptrain_accum --depth 16 --device-batch-size 8 > deeptrain_accum.log 2>&1`. Do NOT run chat_web.py during training (GPU contention causes stalls). **Every 15 minutes, re-read this steering section.** If the directive below says "STOP", kill the training immediately and run SFT with `--max-steps 2000`, then do the full post-pipeline (blog/README/visuals/push).
+
+_Human override:_ CONTINUE
 
 ---
 

@@ -431,3 +431,33 @@ val_bpb broke below 1.0 for the first time (0.990 vs 1.006, a 1.7% drop). The ch
 val_bpb is essentially flat (0.992 vs 0.990 — within noise). The chat responses are comparable to the 25h model with no notable improvements. The sky answer uses "light rays", "primary colors", "wavelengths" — similar vocabulary to 25h. The robot answer opens with an engaging rhetorical question but doesn't advance beyond the 25h quality level. The math answer attempts both LaTeX and Python code formatting, which is new, but the content is still nonsensical. This confirms the model is approaching diminishing returns at 285M params — additional pretraining hours produce measurable but not visible improvements. The next quality leap likely requires either a larger model or improved SFT.
 
 ---
+
+## SFT experiment · 2026-03-24 · 2000 steps vs 500 steps
+
+**Not a deep-train** — this entry documents the effect of 4x longer SFT (2000 steps vs the default 500) on the 30h base checkpoint.
+
+**Motivation**: val_bpb plateaued at 30h but the base model may know more than the 500-step SFT can extract. Longer SFT gives the model more exposure to conversational patterns.
+
+**Benchmark comparison (same 30h base checkpoint, different SFT steps)**
+
+*Q: Explain why the sky is blue.*
+- **500-step**: "Differential calculation of the sky... Sight dimming... Hue contrasting colors" — structured list but vague
+- **2000-step**: "blue light is not a natural phenomenon in our solar system. It's an artificial source of energy... the sky appears to be blue when it has been sunken down by some sunlight... an eventual phenomenon called 'clouding'" — mentions NASA, maintains astronomy narrative, references sunlight
+
+*Q: Hello!*
+- **500-step**: (not tested, but similar prompts produced off-topic responses)
+- **2000-step**: "I'm a big part of the conversation, and we're here to talk about something... Laughter is a great way for people" — engages conversationally for the first time
+
+*Q: Tell me a short story about a robot who learns to feel.*
+- **500-step**: Article about robot training on surfaces and environments, impersonal
+- **2000-step**: "he can move his legs around like a cute little spider... He wants to touch things... It's all about how you feel when your feet are warm and relaxed" — first-person narrative with physical sensations and emotion
+
+*Q: The capital of France is*
+- **500-step**: (not tested)
+- **2000-step**: "the world's largest city... Paris... French restaurant Verin d'Armn" — knows France/Paris connection, generates plausible-sounding (hallucinated) details
+
+**Assessment**: 2000-step SFT is a clear improvement over 500-step on the same base model. The model produces more engaging, narrative, and conversationally appropriate responses. The "Hello!" response is a milestone — the first time the model engages as a conversational partner. Adopted 2000 steps as the new SFT default.
+
+Following this experiment, a 30-hour continuous deep-train was started (30h→60h) to test whether the val_bpb plateau was an artifact of the 5h warmdown/restart cycle.
+
+---
