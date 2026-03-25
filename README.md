@@ -113,6 +113,7 @@ What I added on top:
 - Combining two individually-marginal optimizer changes can produce synergistic improvements
 - **bfloat16 autocast on MPS** yields +21% more steps — Apple Silicon M5 has fast bf16 matmul hardware at transformer sizes (3.9x vs float32); float16 overflows at high LRs but bf16 shares float32's exponent range
 - **MPS pipeline optimization** (sync every 10 steps, cache masks, optimizer scalars on-device) yields +4.4% more steps by reducing GPU pipeline stalls
+- **Longer SFT (2000 steps vs 500)** dramatically improves chat quality on the same base model — first conversational greeting, narrative stories with physical sensation, France/Paris factual connection; adopted as new default
 
 ## Files
 
