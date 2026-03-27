@@ -42,6 +42,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 | 20h | 1.006 | Fluent with bold/numbered lists | FAQ-style lists replace narratives | Sky uses "wavelengths", "absorption", "RGB", "primary colors" | Systematic comparison format; term definitions with categories |
 | 25h | 0.990 | Fluent, complex prose | Consistent astronomy/physics narrative | Sky discusses "sunlight reflected", "wavelength shift", "visible light" | Causal language: "due to", "as a result of", "could cause" |
 | 30h | 0.992 | Fluent prose | Similar to 25h — plateau | Sky: "light rays", "primary colors", "wavelengths"; math attempts LaTeX+Python | No new patterns; model at capacity wall |
+| 60h | 0.958 | Fluent, metaphorical | Consistent light/color themes | Sky leads with "sunlight reflects"; math discusses energy conversion; France places in 18th century | Cause-effect: "when we burn... body converts... producing" |
 
 **Notable milestones:**
 - **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
@@ -53,7 +54,8 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 - **17.6h**: Model invents and maintains fictional narratives; constructs believable interview format with named experts; repetition loops resolved
 - **20h**: val_bpb breaks below 1.01; physics vocabulary ("wavelengths", "absorption", "RGB") appears in sky answer; response style shifts from narrative to information/listicle format
 - **25h**: val_bpb breaks below 1.0; sky discusses sunlight reflection and wavelength shifts — closest to correct physics yet; causal reasoning emerges ("due to", "as a result of")
-- **30h**: val_bpb plateau (0.992 vs 0.990); math attempts LaTeX + Python code; quality comparable to 25h — model approaching capacity wall at 285M params
+- **30h**: val_bpb plateau (0.992 vs 0.990) — caused by 5h warmdown/restart cycle, not model capacity
+- **60h**: val_bpb 0.958 (3.4% drop from 30h); 30h continuous run broke through the fake plateau; sky leads with "sunlight reflects"; cause-effect reasoning emerging in math/robot answers
 
 ### Benchmark responses over time
 

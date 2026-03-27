@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 271 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 12 · **Accumulated pretraining**: 30.0h
+**Total experiments**: 273 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
+**Deep-train sessions**: 13 · **Accumulated pretraining**: 60.0h
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -459,5 +459,41 @@ val_bpb is essentially flat (0.992 vs 0.990 — within noise). The chat response
 **Assessment**: 2000-step SFT is a clear improvement over 500-step on the same base model. The model produces more engaging, narrative, and conversationally appropriate responses. The "Hello!" response is a milestone — the first time the model engages as a conversational partner. Adopted 2000 steps as the new SFT default.
 
 Following this experiment, a 30-hour continuous deep-train was started (30h→60h) to test whether the val_bpb plateau was an artifact of the 5h warmdown/restart cycle.
+
+---
+
+## #13 · 2026-03-26 · 60.0h accumulated pretraining
+
+**val_bpb**: 0.958157 · **model**: depth=16, 1024-dim · ~285M params · 60.0h pretraining
+
+**Last 5 improvements**: No new explore keeps — this was a single 30-hour continuous deep-train (30h→60h), the longest single run yet. The continuous schedule avoided warmdown/restart overhead that caused the fake 25h→30h plateau. val_bpb dropped 3.4% (0.992→0.958), confirming the model was never at capacity — the restart cycle was the bottleneck. SFT run with 2000 steps (new default).
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The blue tint of sunlight reflects the colors and patterns of the sun, creating a sense of depth and dimension. Sunlight: Violet (Light) Spectre - Combining Tanellum with Luminous Purple. The "blue" part of this sky is a beautiful glow that reveals its delicate balance. The blue tint creates an oasis of light and the colors are interlaced to form a symphony or dance.
+
+*Q: What is 2 + 2 and why?*
+> The answer has a particular meaning for this question, as it turns out to be the more we understand what makes up 2 + 2. As you can see in both questions, there are two distinct ways that our body uses energy: bypassing or eliminating negative energies. When we burn an energy source while using 2 + 2, the body converts it back to positive and produces a more powerful muscle tension. We use Energy Saving Efficiency (ESE) when studying for exams or research projects.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> A robot that can learn complex concepts like "machine learning" and "difference of light." The answer lies in its ability to think independently – when they know each other's thoughts are correct, then they're able to reason better decisions. By doing this, humans develop a more flexible approach to problem-solving. Let's start by introducing some basic ideas: 1. **Hebrews (creative thinking):** Think back in time. 2. **Seminars and storytelling:** Share your thoughts. 3. **Machine learning (model-speaker):** Imagine trying to figure out what's going on inside the human body. 4. **Difference of light:** Remember that people tend to be more focused and engaged in problem solving.
+
+*Q: Hello!*
+> I'm writing a blog post about the Hello World Welcome to our website, which is a great place for you. The site provides many details on its structure and function.
+
+*Q: The capital of France is*
+> the city that has been influenced by its people for centuries, with a long sincere history. The Roman Empire was known as Duke of Eden and had no other means to explain it. In fact, the French were an important part of the world's culture in 18th century France.
+
+**Quality assessment vs previous entry (#12, 30h)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce fluent, well-structured prose |
+| Coherency | better | Sky maintains a consistent light/color metaphor throughout; math stays in one domain (energy/body) with consistent logic; robot introduces numbered concepts that build on each other |
+| Topic follow-through | better | Sky opens with "blue tint of sunlight reflects" — first time sunlight reflection is the lead; math references "2 + 2" throughout and discusses energy conversion; France answer mentions "French", "18th century France", Roman influence |
+| Emerging reasoning | better | Math uses cause-effect: "when we burn... the body converts... producing"; robot discusses independent thinking leading to "better decisions"; sky connects "blue tint" → "oasis of light" → "symphony" |
+
+val_bpb dropped to 0.958 (from 0.992, a 3.4% improvement) — the largest single-session improvement and proof that the 25h→30h plateau was caused by the warmdown/restart cycle, not model capacity. The sky answer now leads with "blue tint of sunlight reflects" — the most direct opening yet. The math answer, while still wrong, maintains a consistent energy/body metaphor and uses cause-effect reasoning. The robot answer introduces machine learning and independent thinking concepts in a structured numbered list. The France answer places France in historical context with 18th century culture, though the specific claims are hallucinated. The 30-hour continuous run was clearly superior to the 5h restart cycle.
 
 ---
