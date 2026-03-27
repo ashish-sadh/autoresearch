@@ -714,8 +714,22 @@ if _args.grow_from:
         weight_decay=WEIGHT_DECAY,
     )
 else:
-    config = build_model_config(_effective_depth)
-    print(f"Model config: {asdict(config)}")
+    # If resuming, check if checkpoint has a different config (e.g. grown model with different dim)
+    _peek_ckpt_path = os.path.join(os.path.expanduser("~"), ".cache", "autoresearch", "checkpoints", "resume",
+                                    f"{_args.ckpt_name}_d{_effective_depth}.pt")
+    if _args.resume and os.path.exists(_peek_ckpt_path):
+        _peek = torch.load(_peek_ckpt_path, map_location="cpu", weights_only=False)
+        _peek_cfg = _peek.get("model_config")
+        if _peek_cfg:
+            config = GPTConfig(**_peek_cfg)
+            print(f"Model config (from checkpoint): {asdict(config)}")
+        else:
+            config = build_model_config(_effective_depth)
+            print(f"Model config: {asdict(config)}")
+        del _peek
+    else:
+        config = build_model_config(_effective_depth)
+        print(f"Model config: {asdict(config)}")
 
     with torch.device("meta"):
         model = GPT(config)
