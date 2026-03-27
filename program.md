@@ -6,9 +6,7 @@ This is an experiment to have the LLM do its own research.
 
 **Read this section before every experiment and after every deep-train.** The human may update it at any time to change priorities.
 
-_Current directive:_ Run a **continuous 30-hour deep-train**: `uv run train.py --time 108000 --resume --ckpt-name deeptrain_accum --depth 16 --device-batch-size 8 > deeptrain_accum.log 2>&1`. Do NOT run chat_web.py during training (GPU contention causes stalls). **Every 15 minutes, re-read this steering section.** If the directive below says "STOP", kill the training immediately and run SFT with `--max-steps 2000`, then do the full post-pipeline (blog/README/visuals/push).
-
-_Human override:_ CONTINUE
+_Current directive:_ **Progressive depth growth: d16→d24.** Model grown from 60h d16 checkpoint (285M→419M params, same 1024-dim). Run a 5h deep-train to let new layers integrate: `uv run train.py --time 18000 --resume --ckpt-name deeptrain_accum --depth 24 --device-batch-size 8 > deeptrain_accum.log 2>&1`. After it completes, run SFT with `--max-steps 2000`, do full post-pipeline (blog/README/visuals/push). Do NOT run chat_web.py during training.
 
 ---
 

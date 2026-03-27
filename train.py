@@ -30,6 +30,7 @@ _parser.add_argument("--init-from", type=str, default=None, help="Init model wei
 _parser.add_argument("--ckpt-interval", type=int, default=300, help="Save resume checkpoint every N seconds of training time (default: 300)")
 _parser.add_argument("--depth", type=int, default=None, help="Override DEPTH (for deep-train at d=24 without modifying the file)")
 _parser.add_argument("--device-batch-size", type=int, default=None, help="Override DEVICE_BATCH_SIZE (use smaller value for large models to avoid OOM)")
+_parser.add_argument("--grow-from", type=str, default=None, help="Grow from a shallower checkpoint (progressive depth growth)")
 _args, _ = _parser.parse_known_args()
 
 def verify_macos_env():
@@ -572,34 +573,175 @@ def build_model_config(depth):
         window_pattern=WINDOW_PATTERN,
     )
 
-config = build_model_config(_effective_depth)
-print(f"Model config: {asdict(config)}")
+def grow_model(source_path, target_depth):
+    """Grow a shallower checkpoint to a deeper model (progressive depth growth).
 
-with torch.device("meta"):
-    model = GPT(config)
-model.to_empty(device=device)
-model.init_weights()
+    Keeps the SAME n_embd/n_head/n_kv_head from source; only depth increases.
+    """
+    print(f"\n=== Progressive Depth Growth ===")
+    print(f"Source: {source_path}")
+    print(f"Target depth: {target_depth}")
 
-param_counts = model.num_scaling_params()
-print("Parameter counts:")
-for key, value in param_counts.items():
-    print(f"  {key:24s}: {value:,}")
-num_params = param_counts['total']
-num_flops_per_token = model.estimate_flops()
-print(f"Estimated FLOPs per token: {num_flops_per_token:e}")
+    # Load source checkpoint
+    src_ckpt = torch.load(source_path, map_location=device, weights_only=False)
+    src_state = src_ckpt["model_state"] if isinstance(src_ckpt, dict) and "model_state" in src_ckpt else src_ckpt
+    src_config_dict = src_ckpt.get("model_config", None)
+    if src_config_dict is None:
+        raise ValueError("Source checkpoint missing 'model_config'")
 
-tokens_per_fwdbwd = DEVICE_BATCH_SIZE * MAX_SEQ_LEN
-assert TOTAL_BATCH_SIZE % tokens_per_fwdbwd == 0
-grad_accum_steps = TOTAL_BATCH_SIZE // tokens_per_fwdbwd
+    src_config = GPTConfig(**src_config_dict)
+    source_depth = src_config.n_layer
+    print(f"Source depth: {source_depth}, n_embd: {src_config.n_embd}, n_head: {src_config.n_head}")
 
-optimizer = model.setup_optimizer(
-    unembedding_lr=UNEMBEDDING_LR,
-    embedding_lr=EMBEDDING_LR,
-    scalar_lr=SCALAR_LR,
-    adam_betas=ADAM_BETAS,
-    matrix_lr=MATRIX_LR,
-    weight_decay=WEIGHT_DECAY,
-)
+    # Create target config: SAME dimensions, only depth changes
+    tgt_config = GPTConfig(
+        sequence_len=src_config.sequence_len,
+        vocab_size=src_config.vocab_size,
+        n_layer=target_depth,
+        n_head=src_config.n_head,
+        n_kv_head=src_config.n_kv_head,
+        n_embd=src_config.n_embd,
+        window_pattern=src_config.window_pattern,
+    )
+    print(f"Target config: {asdict(tgt_config)}")
+
+    # Build target model
+    with torch.device("meta"):
+        tgt_model = GPT(tgt_config)
+    tgt_model.to_empty(device=device)
+    tgt_model.init_weights()
+
+    # Compute layer mapping: old layer i -> target index
+    layer_map = {}  # source_idx -> target_idx
+    for i in range(source_depth):
+        target_idx = int(i * (target_depth - 1) / (source_depth - 1) + 0.5)
+        layer_map[i] = target_idx
+    mapped_target_indices = set(layer_map.values())
+    new_layer_indices = [j for j in range(target_depth) if j not in mapped_target_indices]
+    print(f"Layer mapping (source->target): {layer_map}")
+    print(f"New layers (random init, zero c_proj): {new_layer_indices}")
+
+    # Copy wte and lm_head (same dim, direct copy)
+    tgt_model.transformer.wte.weight.data.copy_(src_state["transformer.wte.weight"])
+    tgt_model.lm_head.weight.data.copy_(src_state["lm_head.weight"])
+
+    # Copy block weights for mapped layers
+    for src_idx, tgt_idx in layer_map.items():
+        src_prefix = f"transformer.h.{src_idx}."
+        tgt_block = tgt_model.transformer.h[tgt_idx]
+        for name, param in tgt_block.named_parameters():
+            src_key = src_prefix + name
+            if src_key in src_state:
+                param.data.copy_(src_state[src_key])
+
+    # New layers: c_proj already zero-init from init_weights, other weights are random init — nothing to do
+
+    # resid_lambdas: copy old values at mapped positions, 1.0 for new
+    tgt_resid = torch.ones(target_depth, device=device)
+    for src_idx, tgt_idx in layer_map.items():
+        tgt_resid[tgt_idx] = src_state["resid_lambdas"][src_idx]
+    tgt_model.resid_lambdas.data.copy_(tgt_resid)
+
+    # x0_lambdas: copy old values at mapped positions, 0.1 for new
+    tgt_x0 = torch.full((target_depth,), 0.1, device=device)
+    for src_idx, tgt_idx in layer_map.items():
+        tgt_x0[tgt_idx] = src_state["x0_lambdas"][src_idx]
+    tgt_model.x0_lambdas.data.copy_(tgt_x0)
+
+    # value_embeds: copy where both source and target positions have VE
+    for tgt_ve_key in list(tgt_model.value_embeds.keys()):
+        tgt_ve_idx = int(tgt_ve_key)
+        # Find if this target position was mapped from a source layer that also had VE
+        copied = False
+        for src_idx, tgt_idx in layer_map.items():
+            if tgt_idx == tgt_ve_idx and has_ve(src_idx, source_depth):
+                src_ve_key = f"value_embeds.{src_idx}.weight"
+                if src_ve_key in src_state:
+                    tgt_model.value_embeds[tgt_ve_key].weight.data.copy_(src_state[src_ve_key])
+                    copied = True
+                break
+        if not copied:
+            pass  # keep fresh init from init_weights
+
+    # Carry over accumulated training seconds
+    accumulated_secs = src_ckpt.get("accumulated_training_seconds", 0.0)
+    print(f"Accumulated training seconds from source: {accumulated_secs:.0f}s")
+
+    # Save as new checkpoint
+    _grow_ckpt_dir = os.path.join(os.path.expanduser("~"), ".cache", "autoresearch", "checkpoints", "resume")
+    save_path = os.path.join(_grow_ckpt_dir, f"deeptrain_accum_d{target_depth}.pt")
+    os.makedirs(_grow_ckpt_dir, exist_ok=True)
+    grow_ckpt = {
+        "step": 0,
+        "smooth_train_loss": 0.0,
+        "model_state": {k: v for k, v in tgt_model.state_dict().items()},
+        "model_config": asdict(tgt_config),
+        "accumulated_training_seconds": accumulated_secs,
+    }
+    _tmp = save_path + ".tmp"
+    torch.save(grow_ckpt, _tmp)
+    os.replace(_tmp, save_path)
+    print(f"Saved grown checkpoint to {save_path}")
+    print(f"=== Growth complete ===\n")
+
+    return tgt_model, tgt_config, accumulated_secs
+
+_growth_warmup_steps = 200
+_used_grow_from = _args.grow_from is not None
+
+if _args.grow_from:
+    model, config, _grow_accumulated_prev = grow_model(_args.grow_from, _effective_depth)
+    print(f"Model config: {asdict(config)}")
+
+    param_counts = model.num_scaling_params()
+    print("Parameter counts:")
+    for key, value in param_counts.items():
+        print(f"  {key:24s}: {value:,}")
+    num_params = param_counts['total']
+    num_flops_per_token = model.estimate_flops()
+    print(f"Estimated FLOPs per token: {num_flops_per_token:e}")
+
+    tokens_per_fwdbwd = DEVICE_BATCH_SIZE * MAX_SEQ_LEN
+    assert TOTAL_BATCH_SIZE % tokens_per_fwdbwd == 0
+    grad_accum_steps = TOTAL_BATCH_SIZE // tokens_per_fwdbwd
+
+    optimizer = model.setup_optimizer(
+        unembedding_lr=UNEMBEDDING_LR,
+        embedding_lr=EMBEDDING_LR,
+        scalar_lr=SCALAR_LR,
+        adam_betas=ADAM_BETAS,
+        matrix_lr=MATRIX_LR,
+        weight_decay=WEIGHT_DECAY,
+    )
+else:
+    config = build_model_config(_effective_depth)
+    print(f"Model config: {asdict(config)}")
+
+    with torch.device("meta"):
+        model = GPT(config)
+    model.to_empty(device=device)
+    model.init_weights()
+
+    param_counts = model.num_scaling_params()
+    print("Parameter counts:")
+    for key, value in param_counts.items():
+        print(f"  {key:24s}: {value:,}")
+    num_params = param_counts['total']
+    num_flops_per_token = model.estimate_flops()
+    print(f"Estimated FLOPs per token: {num_flops_per_token:e}")
+
+    tokens_per_fwdbwd = DEVICE_BATCH_SIZE * MAX_SEQ_LEN
+    assert TOTAL_BATCH_SIZE % tokens_per_fwdbwd == 0
+    grad_accum_steps = TOTAL_BATCH_SIZE // tokens_per_fwdbwd
+
+    optimizer = model.setup_optimizer(
+        unembedding_lr=UNEMBEDDING_LR,
+        embedding_lr=EMBEDDING_LR,
+        scalar_lr=SCALAR_LR,
+        adam_betas=ADAM_BETAS,
+        matrix_lr=MATRIX_LR,
+        weight_decay=WEIGHT_DECAY,
+    )
 
 # ---------------------------------------------------------------------------
 # Resume checkpoint (only for --time runs)
@@ -616,14 +758,18 @@ _resumed_step = 0
 _resumed_smooth_loss = 0.0
 _accumulated_prev = 0.0  # training seconds accumulated across previous sessions
 
-if _args.init_from:
+if _args.grow_from:
+    # Growth path: skip --resume and --init-from, use accumulated seconds from source
+    _accumulated_prev = _grow_accumulated_prev
+    print(f"Growth mode: accumulated_prev={_accumulated_prev:.0f}s, fresh optimizer")
+elif _args.init_from:
     # Warm model weights, fresh optimizer — used to start a deep-train from the loop's best model
     _init = torch.load(_args.init_from, map_location=device, weights_only=False)
     _init_state = _init["model_state"] if isinstance(_init, dict) and "model_state" in _init else _init
     model.load_state_dict(_init_state)
     print(f"Initialized model weights from {_args.init_from} (fresh optimizer)")
 
-if _args.resume:
+if not _args.grow_from and _args.resume:
     if not _use_checkpointing:
         print("WARNING: --resume ignored (only valid with --time)")
     elif os.path.exists(_resume_ckpt_path):
@@ -665,14 +811,18 @@ print(f"Gradient accumulation steps: {grad_accum_steps}")
 
 # Schedules (all based on progress = training_time / TIME_BUDGET)
 
-def get_lr_multiplier(progress):
+def get_lr_multiplier(progress, step=None):
     if progress < WARMUP_RATIO:
-        return progress / WARMUP_RATIO if WARMUP_RATIO > 0 else 1.0
+        base = progress / WARMUP_RATIO if WARMUP_RATIO > 0 else 1.0
     elif progress < 1.0 - WARMDOWN_RATIO:
-        return 1.0
+        base = 1.0
     else:
         cooldown = (1.0 - progress) / WARMDOWN_RATIO
-        return cooldown * 1.0 + (1 - cooldown) * FINAL_LR_FRAC
+        base = cooldown * 1.0 + (1 - cooldown) * FINAL_LR_FRAC
+    # Growth warmup: additional linear warmup for first N steps after depth growth
+    if _used_grow_from and step is not None and step < _growth_warmup_steps:
+        base *= min(step / _growth_warmup_steps, 1.0)
+    return base
 
 def get_muon_momentum(step):
     frac = min(step / 200, 1)  # re-tune for bf16 ~980 steps (20% warmup)
@@ -717,7 +867,7 @@ while True:
 
     # Progress and schedules
     progress = min(total_training_time / TIME_BUDGET, 1.0)
-    lrm = get_lr_multiplier(progress)
+    lrm = get_lr_multiplier(progress, step)
     muon_momentum = get_muon_momentum(step)
     muon_weight_decay = get_weight_decay(progress)
     for group in optimizer.param_groups:
