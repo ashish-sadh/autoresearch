@@ -38,7 +38,7 @@ from dataclasses import dataclass, asdict
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--max-steps", type=int, default=2000, help="Max optimizer steps")
-parser.add_argument("--batch-size", type=int, default=4)
+parser.add_argument("--batch-size", type=int, default=2)
 parser.add_argument("--lr", type=float, default=1e-4)
 parser.add_argument("--shards", type=int, default=1, help="Number of SmolTalk shards to download")
 parser.add_argument("--base-checkpoint", type=str, default=None, help="Load base model from a deep-train checkpoint .pt file instead of auto-detecting best_model.pt")
@@ -78,7 +78,7 @@ else:
         sys.exit(1)
 
 if args.base_checkpoint:
-    # Derive depth from deep-train checkpoint metadata
+    # Derive depth from deep-train checkpoint metadata (load to CPU to save GPU memory)
     _ckpt_meta = torch.load(args.base_checkpoint, map_location="cpu", weights_only=False)
     _cfg = _ckpt_meta.get("model_config")
     if _cfg is None:
@@ -86,6 +86,8 @@ if args.base_checkpoint:
         sys.exit(1)
     detected_depth = _cfg["n_layer"]
     accum_s = _ckpt_meta.get("accumulated_training_seconds", 0)
+    _ckpt_model_state = _ckpt_meta["model_state"]  # keep only what we need
+    del _ckpt_meta["model_state"]  # free the duplicate
     print(f"Loading deep-train checkpoint: depth={detected_depth}, accumulated {accum_s/3600:.1f}h pretraining")
 
 SFT_CKPT_DIR = os.path.join(CHECKPOINTS_DIR, f"d{detected_depth}_sft")
@@ -241,7 +243,9 @@ class GPT(nn.Module):
             ve = self.value_embeds[str(i)](idx).float() if str(i) in self.value_embeds else None
             x = block(x, ve, cos_sin, self.window_sizes[i])
         softcap = 15.0
-        logits = softcap * torch.tanh(self.lm_head(norm(x)) / softcap)
+        logits = self.lm_head(norm(x))
+        logits = logits.float()  # float32 for softcap/loss (prevents bf16 overflow)
+        logits = softcap * torch.tanh(logits / softcap)
         if targets is not None:
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=-1)
             return loss
@@ -270,12 +274,13 @@ print(f"Tokenizer loaded. Special tokens: bos={bos_id} user={user_id} asst={asst
 # ---------------------------------------------------------------------------
 
 if args.base_checkpoint:
-    ckpt = torch.load(args.base_checkpoint, map_location=device, weights_only=False)
-    config = GPTConfig(**ckpt["model_config"])
+    config = GPTConfig(**_cfg)
     meta = {"val_bpb": "n/a (deep-train checkpoint)"}
     print(f"Base model: {config}")
     model = GPT(config).to(device)
-    model.load_state_dict(ckpt["model_state"], strict=True)
+    model.load_state_dict(_ckpt_model_state, strict=True)
+    del _ckpt_model_state  # free CPU copy
+    import gc; gc.collect()
 else:
     base_model_path = os.path.join(BASE_CKPT_DIR, "best_model.pt")
     base_meta_path  = os.path.join(BASE_CKPT_DIR, "best_meta.json")
@@ -292,7 +297,19 @@ else:
     model.load_state_dict(state, strict=True)
 
 model.train()
-print("Base model loaded.")
+# Freeze most of the model during SFT — only fine-tune the last few blocks + lm_head.
+# Pretraining with Muon can produce extreme x0_lambdas/resid_lambdas that create huge
+# activations. These are stable under Muon but cause NaN when AdamW SFT tries to update
+# the weights (gradients through 1000x-scaled activations are too large).
+# Freezing all but the tail blocks keeps the internal representations stable.
+for param in model.parameters():
+    param.requires_grad_(False)
+# Unfreeze lm_head only — safest for models with extreme internal scalars
+for param in model.lm_head.parameters():
+    param.requires_grad_(True)
+_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+_total = sum(p.numel() for p in model.parameters())
+print(f"Base model loaded. SFT: {_trainable:,} trainable / {_total:,} total params ({100*_trainable/_total:.1f}%). lm_head only.")
 
 # ---------------------------------------------------------------------------
 # Download SmolTalk
@@ -427,8 +444,21 @@ def make_batch(examples, batch_size):
 
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.1, betas=(0.9, 0.95))
 
+# bfloat16 autocast for MPS (saves memory + faster matmuls)
+if device_type == "mps":
+    autocast_ctx = torch.amp.autocast(device_type="mps", dtype=torch.bfloat16)
+elif device_type == "cuda":
+    autocast_ctx = torch.amp.autocast(device_type="cuda", dtype=torch.bfloat16)
+else:
+    import contextlib
+    autocast_ctx = contextlib.nullcontext()
+
+# Gradient accumulation: split batch into micro-batches of 1 to reduce peak memory
+MICRO_BATCH = 1
+grad_accum_steps = args.batch_size // MICRO_BATCH
+
 total_steps = min(args.max_steps, len(all_examples) // args.batch_size)
-print(f"\nTraining for {total_steps} steps (batch_size={args.batch_size}, lr={args.lr})")
+print(f"\nTraining for {total_steps} steps (batch_size={args.batch_size}, micro_batch={MICRO_BATCH}, lr={args.lr})")
 
 # Cosine LR decay
 def get_lr(step):
@@ -454,8 +484,23 @@ for epoch in range(999):
         for g in optimizer.param_groups:
             g["lr"] = lr
 
-        loss = model(input_ids, targets)
-        loss.backward()
+        # Gradient accumulation with micro-batches
+        _nan_batch = False
+        for micro_start in range(0, input_ids.size(0), MICRO_BATCH):
+            micro_ids = input_ids[micro_start:micro_start + MICRO_BATCH]
+            micro_tgt = targets[micro_start:micro_start + MICRO_BATCH]
+            with autocast_ctx:
+                loss = model(micro_ids, micro_tgt)
+            if torch.isnan(loss) or torch.isinf(loss):
+                _nan_batch = True
+                break
+            (loss / grad_accum_steps).backward()
+        if _nan_batch:
+            # Skip this batch — extreme internal activations can overflow on certain inputs
+            optimizer.zero_grad(set_to_none=True)
+            print(f"\n[warn] NaN loss at step {step+1}, skipping batch", flush=True)
+            step += 1
+            continue
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         optimizer.zero_grad(set_to_none=True)
@@ -468,6 +513,10 @@ for epoch in range(999):
         print(f"\rstep {step+1:04d}/{total_steps} | loss: {smooth_loss:.4f} | lr: {lr:.2e} | elapsed: {dt:.0f}s | remaining: {remaining:.0f}s    ",
               end="", flush=True)
         step += 1
+
+        # Periodic MPS cache cleanup
+        if device_type == "mps" and step % 200 == 0 and step > 0:
+            torch.mps.empty_cache()
 
         # Save intermediate checkpoint every 100 steps
         if step % 100 == 0:
