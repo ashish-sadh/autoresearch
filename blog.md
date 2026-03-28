@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 273 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 13 · **Accumulated pretraining**: 60.0h
+**Total experiments**: 275 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
+**Deep-train sessions**: 14 · **Accumulated pretraining**: 60.0h (d16) + 5.0h (d24)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -495,5 +495,37 @@ Following this experiment, a 30-hour continuous deep-train was started (30h→60
 | Emerging reasoning | better | Math uses cause-effect: "when we burn... the body converts... producing"; robot discusses independent thinking leading to "better decisions"; sky connects "blue tint" → "oasis of light" → "symphony" |
 
 val_bpb dropped to 0.958 (from 0.992, a 3.4% improvement) — the largest single-session improvement and proof that the 25h→30h plateau was caused by the warmdown/restart cycle, not model capacity. The sky answer now leads with "blue tint of sunlight reflects" — the most direct opening yet. The math answer, while still wrong, maintains a consistent energy/body metaphor and uses cause-effect reasoning. The robot answer introduces machine learning and independent thinking concepts in a structured numbered list. The France answer places France in historical context with 18th century culture, though the specific claims are hallucinated. The 30-hour continuous run was clearly superior to the 5h restart cycle.
+
+---
+
+## #14 · 2026-03-28 · Progressive depth growth: d16→d24 + 5h pretraining
+
+**val_bpb**: 0.978753 · **model**: depth=24, 1024-dim · ~419M params · 5h pretraining (grown from d16 60h)
+
+**Progressive depth growth**: Implemented `--grow-from` in train.py to expand a trained d16 model to d24 by interleaving 8 new layers (passthrough, zero-init c_proj) between the 16 existing ones. The grown model inherits the source's 1024-dim width, increasing params from 285M→419M. After 5h of d24 pretraining, val_bpb recovered from 1.167 (post-growth) to 0.979 — nearly matching d16's 0.958.
+
+**SFT challenge**: The d24 pretraining produced extreme x0_lambdas (~-1224) that cause NaN overflow on specific input batches during SFT. Fixed by adding NaN batch detection and skipping (7/500 = 1.4% affected). SFT trained lm_head only due to the extreme internal scalars.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The beauty of darkness: The shadows and textures can bring a sense of enchantment to your home or office... To understand deeper about this fascinating topic, we need to delve into the fascinating world of night sky. From its origins in ancient civilizations such as Rome and Greece, to the unique effects of waking darkness on our human body today...
+
+*Q: Hello!*
+> I'm excited to share the journey of a lion named Mummy, living in Madagascar... My research interests include socialization, communication with other cats, hunting for prey, and companionship...
+
+*Q: The capital of France is*
+> the capital city, meaning it's one of 15 cities in Europe... Sub-European cuisine is known for its rich flavors, while Italian food is traditionally made with meat dishes... Northern Ireland... Bordeaux...
+
+**Quality assessment vs d16 60h**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce fluent, well-structured prose |
+| Coherency | mixed | Longer, more elaborate responses but more repetitive; sky mentions "astronomers' work" and "sunlight" but frames it as home décor |
+| Topic follow-through | worse | Sky drifts from darkness to home décor to astronomers; Hello produces an unrelated lion story; France mentions Bordeaux and European geography but gets confused |
+| Emerging reasoning | same | Structured with headers, bullet points, disclaimers; no improvement in causal reasoning |
+
+The d24 model produces notably longer and more structured responses (headers, bullet points, disclaimers) than d16, reflecting the increased model capacity. However, the lm_head-only SFT means the model can't fully adapt its internal representations for chat — it can only remap the output projection. The responses are more verbose but less focused. The next step should be either: (1) fixing the extreme x0_lambdas to enable full SFT, or (2) training d24 longer to let the scalars stabilize before SFT.
 
 ---

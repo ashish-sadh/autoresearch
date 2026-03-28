@@ -270,3 +270,5 @@ dd8878d	1.306350	0.0	discard	Exp263: DEPTH 4→5 (565 steps; depth cost still > 
 679376c	0.000000	0.0	deep-train	SFT on 30.0h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
 c13b48d	0.958157	0.0	deep-train	60.0h accum pretraining d16 1024-dim; 14197 steps
 c13b48d	0.000000	0.0	deep-train	SFT (2000 steps) on 60.0h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
+4c5321f	0.978753	0.0	deep-train	5.0h d24 pretraining (grown from d16 60h); 419M params 1024-dim 24 layers; 846 steps
+4c5321f	0.000000	0.0	deep-train	SFT (500 steps, lm_head only) on d24 5h checkpoint

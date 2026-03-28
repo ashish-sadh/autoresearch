@@ -56,6 +56,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 - **25h**: val_bpb breaks below 1.0; sky discusses sunlight reflection and wavelength shifts — closest to correct physics yet; causal reasoning emerges ("due to", "as a result of")
 - **30h**: val_bpb plateau (0.992 vs 0.990) — caused by 5h warmdown/restart cycle, not model capacity
 - **60h**: val_bpb 0.958 (3.4% drop from 30h); 30h continuous run broke through the fake plateau; sky leads with "sunlight reflects"; cause-effect reasoning emerging in math/robot answers
+- **d24 growth**: Progressive depth growth d16→d24 (285M→419M params). Recovered from 1.167 to 0.979 val_bpb in 5h. SFT challenged by extreme internal scalars — solved with NaN batch skipping
 
 ### Benchmark responses over time
 
