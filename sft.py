@@ -302,14 +302,13 @@ model.train()
 # activations. These are stable under Muon but cause NaN when AdamW SFT tries to update
 # the weights (gradients through 1000x-scaled activations are too large).
 # Freezing all but the tail blocks keeps the internal representations stable.
-for param in model.parameters():
-    param.requires_grad_(False)
-# Unfreeze lm_head only — safest for models with extreme internal scalars
-for param in model.lm_head.parameters():
-    param.requires_grad_(True)
+# All layers trainable, but freeze per-layer scalars (extreme values are part of
+# the model's learned balance — updating them under AdamW breaks that balance).
+model.resid_lambdas.requires_grad_(False)
+model.x0_lambdas.requires_grad_(False)
 _trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
 _total = sum(p.numel() for p in model.parameters())
-print(f"Base model loaded. SFT: {_trainable:,} trainable / {_total:,} total params ({100*_trainable/_total:.1f}%). lm_head only.")
+print(f"Base model loaded. SFT: {_trainable:,} trainable / {_total:,} total params ({100*_trainable/_total:.1f}%). Scalars frozen, all blocks+lm_head trainable.")
 
 # ---------------------------------------------------------------------------
 # Download SmolTalk
@@ -501,7 +500,8 @@ for epoch in range(999):
             print(f"\n[warn] NaN loss at step {step+1}, skipping batch", flush=True)
             step += 1
             continue
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        # Tight clipping: extreme x0_lambdas amplify gradients through the residual stream
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 0.1)
         optimizer.step()
         optimizer.zero_grad(set_to_none=True)
 
