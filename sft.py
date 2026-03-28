@@ -469,6 +469,13 @@ for epoch in range(999):
               end="", flush=True)
         step += 1
 
+        # Save intermediate checkpoint every 100 steps
+        if step % 100 == 0:
+            _inter_state = {k: v.float() if v.dtype == torch.bfloat16 else v for k, v in model.state_dict().items()}
+            _inter_path = os.path.join(SFT_CKPT_DIR, "best_model.pt")
+            torch.save(_inter_state, _inter_path)
+            print(f"\n[ckpt] saved intermediate SFT at step {step}", flush=True)
+
     if step >= total_steps:
         break
 
