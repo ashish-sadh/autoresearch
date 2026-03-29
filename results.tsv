@@ -272,3 +272,5 @@ c13b48d	0.958157	0.0	deep-train	60.0h accum pretraining d16 1024-dim; 14197 step
 c13b48d	0.000000	0.0	deep-train	SFT (2000 steps) on 60.0h accum checkpoint → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev
 4c5321f	0.978753	0.0	deep-train	5.0h d24 pretraining (grown from d16 60h); 419M params 1024-dim 24 layers; 846 steps
 4c5321f	0.000000	0.0	deep-train	SFT (500 steps, lm_head only) on d24 5h checkpoint
+43627a3	0.990123	0.0	deep-train	10.0h d24 pretraining (grown from d16 60h); 419M params; 1077 steps
+43627a3	0.000000	0.0	deep-train	SFT (500 steps, lr=1e-5, all layers, NaN skip) on d24 10h

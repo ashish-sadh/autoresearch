@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 275 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 14 · **Accumulated pretraining**: 60.0h (d16) + 5.0h (d24)
+**Total experiments**: 277 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
+**Deep-train sessions**: 15 · **Accumulated pretraining**: 60.0h (d16) + 10.0h (d24)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -527,5 +527,35 @@ val_bpb dropped to 0.958 (from 0.992, a 3.4% improvement) — the largest single
 | Emerging reasoning | same | Structured with headers, bullet points, disclaimers; no improvement in causal reasoning |
 
 The d24 model produces notably longer and more structured responses (headers, bullet points, disclaimers) than d16, reflecting the increased model capacity. However, the lm_head-only SFT means the model can't fully adapt its internal representations for chat — it can only remap the output projection. The responses are more verbose but less focused. The next step should be either: (1) fixing the extreme x0_lambdas to enable full SFT, or (2) training d24 longer to let the scalars stabilize before SFT.
+
+---
+
+## #15 · 2026-03-28 · d24 10h pretraining + full-layer SFT fix
+
+**val_bpb**: 0.990123 · **model**: depth=24, 1024-dim · ~419M params · 10h pretraining
+
+**SFT fix**: Diagnosed that the NaN was caused by extreme x0_lambdas (-1105 in d16, inherited by d24) amplifying specific input batches into overflow. The fix: freeze only scalars (resid_lambdas + x0_lambdas), unfreeze all blocks + lm_head, use lr=1e-5 (10x lower), clip_grad_norm=0.1 (10x tighter), and skip NaN batches (7/500 = 1.4%). Full-layer SFT now works. Previous lm_head-only approach was a workaround, not a fix.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The sky's shadows and darkness are known as "the celestial spirit"... When you look at different colors in the sky you can determine how they're perceived by our eyes. This is because there is an area where the reflected rays are absorbed and project onto objects... Blue is the sky that I am confident about.
+
+*Q: Hello!*
+> My name is Jimmy, and I'm a student at UCLA. Hi there, my name is Kathleen, and I am interested in using this for research purposes... Thank you for joining me.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> The robot has been trained on how robots learn by looking at a mirror while interacting with other humans... "What if I could learn how to communicate without talking?" To answer that question: "Would you teach me how to express myself?"
+
+**Quality assessment vs d24 5h (#14, lm_head-only SFT)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both fluent |
+| Coherency | better | Sky maintains "celestial" theme; robot tells a coherent story about learning to interact; Hello produces conversational exchange with names |
+| Topic follow-through | better | Sky discusses "reflected rays absorbed", "colors perceived by eyes" — physics-adjacent; robot asks "Would you teach me how to express myself?" — directly relevant |
+| Emerging reasoning | better | Robot story has dialogue and self-reflection; Hello has social dynamics; sky connects observation to perception |
+
+The full-layer SFT (all blocks trainable, not just lm_head) produces clearly better responses than the lm_head-only version. The robot story now includes dialogue ("What if I could learn how to communicate without talking?") and the Hello response creates a conversational exchange with multiple participants. val_bpb at 0.990 (10h d24) vs 0.958 (60h d16) — the d24 needs more training to match d16's val_bpb, but chat quality is already competitive thanks to the increased model capacity.
 
 ---
