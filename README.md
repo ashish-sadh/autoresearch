@@ -43,6 +43,9 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 | 25h | 0.990 | Fluent, complex prose | Consistent astronomy/physics narrative | Sky discusses "sunlight reflected", "wavelength shift", "visible light" | Causal language: "due to", "as a result of", "could cause" |
 | 30h | 0.992 | Fluent prose | Similar to 25h — plateau | Sky: "light rays", "primary colors", "wavelengths"; math attempts LaTeX+Python | No new patterns; model at capacity wall |
 | 60h | 0.958 | Fluent, metaphorical | Consistent light/color themes | Sky leads with "sunlight reflects"; math discusses energy conversion; France places in 18th century | Cause-effect: "when we burn... body converts... producing" |
+| | | | **Progressive depth growth: d16→d24 (285M→419M params, same 1024-dim)** | | |
+| d24 5h | 0.979 | Longer, headers/bullets | Elaborate but repetitive | Sky mentions astronomers/sunlight; France mentions Bordeaux | Structured with disclaimers; lm_head-only SFT limitation |
+| d24 10h | 0.990 | Fluent, conversational | Maintains themes well | Sky: "reflected rays absorbed"; robot: "Would you teach me how to express myself?" | Dialogue, self-reflection; Hello creates multi-participant exchange |
 
 **Notable milestones:**
 - **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
@@ -56,7 +59,8 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 - **25h**: val_bpb breaks below 1.0; sky discusses sunlight reflection and wavelength shifts — closest to correct physics yet; causal reasoning emerges ("due to", "as a result of")
 - **30h**: val_bpb plateau (0.992 vs 0.990) — caused by 5h warmdown/restart cycle, not model capacity
 - **60h**: val_bpb 0.958 (3.4% drop from 30h); 30h continuous run broke through the fake plateau; sky leads with "sunlight reflects"; cause-effect reasoning emerging in math/robot answers
-- **d24 growth**: Progressive depth growth d16→d24 (285M→419M params). Recovered from 1.167 to 0.979 val_bpb in 5h. SFT challenged by extreme internal scalars — solved with NaN batch skipping
+- **d24 growth**: Progressive depth growth d16→d24 (285M→419M params, same 1024-dim). Recovered from 1.167 to 0.979 val_bpb in 5h
+- **d24 10h**: Full-layer SFT fixed (freeze scalars, lr=1e-5, clip=0.1, NaN skip). Robot story includes dialogue: "Would you teach me how to express myself?"
 
 ### Benchmark responses over time
 
@@ -94,13 +98,13 @@ What I added on top:
 
 ## Architecture
 
-| | Explore loop | Deep-train |
-|---|---|---|
-| **Depth** | 4 | 16 |
-| **Params** | ~5M | ~285M |
-| **Dimension** | 256 | 1024 |
-| **Duration** | 5 min | 1 hour |
-| **Purpose** | Find optimal hyperparams | Build real capability |
+| | Explore loop | Deep-train (d16) | Deep-train (d24) |
+|---|---|---|---|
+| **Depth** | 4 | 16 | 24 |
+| **Params** | ~5M | ~285M | ~419M |
+| **Dimension** | 256 | 1024 | 1024 |
+| **Duration** | 5 min | 1-30 hours | 5+ hours |
+| **Purpose** | Find optimal hyperparams | Build real capability | Progressive depth growth |
 
 - **Optimizer**: Muon (matrix params) + AdamW (embeddings/scalars)
 - **Hardware**: Apple M5 Max, 64GB unified memory, macOS MPS
