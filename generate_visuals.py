@@ -44,8 +44,8 @@ def parse_blog_entries():
         content = f.read()
 
     entries = []
-    # Split on entry headers: ## #N · date · Xh accumulated pretraining
-    parts = re.split(r'## #\d+ · .+ · (.+?) accumulated pretraining', content)
+    # Split on entry headers: ## #N · date · Xh accumulated pretraining [optional (dN) suffix]
+    parts = re.split(r'## #\d+ · .+ · (.+?) accumulated pretraining(?: \(d\d+\))?', content)
 
     for i in range(1, len(parts), 2):
         hours_str = parts[i].strip()  # e.g. "1.0h" or "7.0h"
@@ -57,9 +57,14 @@ def parse_blog_entries():
             continue
         val_bpb = float(bpb_match.group(1))
 
+        # Detect depth from body (default d16)
+        depth_match = re.search(r'depth=(\d+)', body)
+        depth = int(depth_match.group(1)) if depth_match else 16
+
         # Extract hours (keep float precision for non-integer hours like 14.5h)
         hours_float = float(hours_str.replace('h', ''))
-        hours_label = f'{hours_float:g}h'  # "7h" for 7.0, "14.5h" for 14.5
+        # For d24+, prefix with depth to distinguish from d16 hours
+        hours_label = f'd{depth} {hours_float:g}h' if depth > 16 else f'{hours_float:g}h'
 
         # Extract responses for each question
         responses = {}

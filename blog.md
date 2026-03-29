@@ -498,7 +498,7 @@ val_bpb dropped to 0.958 (from 0.992, a 3.4% improvement) — the largest single
 
 ---
 
-## #14 · 2026-03-28 · Progressive depth growth: d16→d24 + 5h pretraining
+## #14 · 2026-03-28 · 5h accumulated pretraining (d24)
 
 **val_bpb**: 0.978753 · **model**: depth=24, 1024-dim · ~419M params · 5h pretraining (grown from d16 60h)
 
@@ -530,7 +530,7 @@ The d24 model produces notably longer and more structured responses (headers, bu
 
 ---
 
-## #15 · 2026-03-28 · d24 10h pretraining + full-layer SFT fix
+## #15 · 2026-03-28 · 10h accumulated pretraining (d24)
 
 **val_bpb**: 0.990123 · **model**: depth=24, 1024-dim · ~419M params · 10h pretraining
 
