@@ -47,6 +47,8 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 | d24 5h | 0.979 | Longer, headers/bullets | Elaborate but repetitive | Sky mentions astronomers/sunlight; France mentions Bordeaux | Structured with disclaimers; lm_head-only SFT limitation |
 | d24 10h | 0.990 | Fluent, conversational | Maintains themes well | Sky: "reflected rays absorbed"; robot: "Would you teach me how to express myself?" | Dialogue, self-reflection; Hello creates multi-participant exchange |
 | d24 15h | 0.966 | Structured, thematic | Sky uses "The sky can be blue" as recurring motif | Robot discusses communication compatibility | Multi-angle analysis; numbered conditions |
+| | | | **Progressive depth growth: d24→d32 (419M→553M params, same 1024-dim)** | | |
+| d32 5h | 0.971 | Fluent, detailed | Robot has 10-year narrative with "Myself" | Sky: "sun's energy reflects off earth", "tonal spectrum of visible light" | Self-aware math: "I'm not sure what's going on" |
 
 **Notable milestones:**
 - **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
@@ -62,7 +64,8 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 - **60h**: val_bpb 0.958 (3.4% drop from 30h); 30h continuous run broke through the fake plateau; sky leads with "sunlight reflects"; cause-effect reasoning emerging in math/robot answers
 - **d24 growth**: Progressive depth growth d16→d24 (285M→419M params, same 1024-dim). Recovered from 1.167 to 0.979 val_bpb in 5h
 - **d24 10h**: Full-layer SFT fixed (freeze scalars, lr=1e-5, clip=0.1, NaN skip). Robot story includes dialogue: "Would you teach me how to express myself?"
-- **d24 15h**: val_bpb 0.966 — within 0.8% of d16's 0.958 at 60h, achieved in 15h (4x faster per hour). Ready to grow to d32
+- **d24 15h**: val_bpb 0.966 — within 0.8% of d16's 0.958 at 60h, achieved in 15h (4x faster per hour)
+- **d32 5h**: 553M params. Sky answer mentions "sun's energy reflects off earth" and "tonal spectrum of visible light" — most physics-specific response yet
 
 ### Benchmark responses over time
 

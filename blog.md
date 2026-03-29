@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 279 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 16 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24)
+**Total experiments**: 281 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
+**Deep-train sessions**: 17 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 5.0h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -587,5 +587,35 @@ The full-layer SFT (all blocks trainable, not just lm_head) produces clearly bet
 | Emerging reasoning | better | Sky explores the phrase from multiple angles (identity, historical, climate); robot uses numbered conditions for when communication fails |
 
 val_bpb 0.966 nearly matches d16's 0.958 in only 15h vs 60h. The d24 model is learning ~4x faster per hour than d16 did, confirming that progressive depth growth is more efficient than training a shallower model longer. Ready to grow to d32.
+
+---
+
+## #17 · 2026-03-29 · 5h accumulated pretraining (d32)
+
+**val_bpb**: 0.970539 · **model**: depth=32, 1024-dim · ~553M params · 5h pretraining (grown from d24 15h)
+
+**Progressive depth growth d24→d32**: 8 new layers interleaved, 419M→553M params. Loss started at 2.82 (minimal regression from d24's 2.65) and dropped to 2.60 in 5h. val_bpb 0.971 already competitive with d24's 0.966 at 15h. 20h continuous training next.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The tonal spectrum of visible light and near-visible light are often more distinct as they approach us than we think. The sun's energy reflects off earth from any angle, causing it to change color in response to changes in its environment, including temperature; sunlight reaching Earth; or airplanes landing on a plane.
+
+*Q: Hello!*
+> I am an experienced and qualified parent who's deep love for mathematical skills, has a passion for learning in the field of science and technology... My passion as a researcher is paving the way towards understanding and appreciating different types of abstract ideas.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> I had been working on this for over 10 years now with my robot friend Myself - he has taught me more than I used to. The robots were just like those described by him in an article recently published in Nature Communications, and they started looking at things from a different angle as if they were not being taught.
+
+**Quality assessment vs d24 15h (#16)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both fluent |
+| Coherency | mixed | Sky repeats the same paragraph (regression); robot maintains a consistent 10-year narrative with "Myself" |
+| Topic follow-through | better | Sky mentions "sun's energy reflects off earth", "tonal spectrum of visible light" — most physics-specific yet; robot references Nature Communications publication |
+| Emerging reasoning | better | Robot discusses learning progression over 10 years; math acknowledges "I'm not sure what's going on" (self-awareness); Hello presents a researcher's career narrative |
+
+val_bpb 0.971 at d32 5h vs d24's 0.966 at 15h. The d32 model already produces the most physics-specific sky answer yet ("sun's energy reflects off earth", "tonal spectrum of visible light"). The robot story introduces a long-term learning relationship with a named robot friend. The repetition issue in the sky answer suggests the model needs more training. 20h continuous run starting next.
 
 ---

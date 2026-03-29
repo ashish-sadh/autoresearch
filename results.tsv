@@ -276,3 +276,5 @@ c13b48d	0.000000	0.0	deep-train	SFT (2000 steps) on 60.0h accum checkpoint → c
 43627a3	0.000000	0.0	deep-train	SFT (500 steps, lr=1e-5, all layers, NaN skip) on d24 10h
 78d11c8	0.966065	0.0	deep-train	15.0h d24 pretraining; 419M params; 2339 steps
 78d11c8	0.000000	0.0	deep-train	SFT (500 steps, lr=1e-5) on d24 15h
+1596328	0.970539	0.0	deep-train	5h d32 pretraining (grown from d24 15h); 553M params; 809 steps
+1596328	0.000000	0.0	deep-train	SFT (500 steps, lr=1e-5) on d32 5h
