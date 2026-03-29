@@ -6,7 +6,15 @@ This is an experiment to have the LLM do its own research.
 
 **Read this section before every experiment and after every deep-train.** The human may update it at any time to change priorities.
 
-_Current directive:_ **Progressive depth growth: d16→d24.** Model grown from 60h d16 checkpoint (285M→419M params, same 1024-dim). Run a 5h deep-train to let new layers integrate: `uv run train.py --time 18000 --resume --ckpt-name deeptrain_accum --depth 24 --device-batch-size 8 > deeptrain_accum.log 2>&1`. After it completes, run SFT with `--max-steps 2000`, do full post-pipeline (blog/README/visuals/push). Do NOT run chat_web.py during training.
+_Current directive:_ **Train d32 for 20 hours before expanding further.** After the current 5h d32 run completes, do SFT + full post-pipeline, then start a **20-hour continuous deep-train**: `uv run train.py --time 72000 --resume --ckpt-name deeptrain_accum --depth 32 --device-batch-size 4 > deeptrain_accum.log 2>&1`. Do NOT run chat_web.py during training. After 20h completes (25h d32 total), do SFT + full post-pipeline, then assess whether to continue d32 or grow to d40.
+
+**Cycle steps:**
+1. Grow model: `uv run train.py --time 18000 --grow-from ~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d{PREV}.pt --ckpt-name deeptrain_accum --depth {NEXT} --device-batch-size 4 > deeptrain_accum.log 2>&1`
+2. After training completes, note val_bpb. If val_bpb is within 5% of the previous depth's best, proceed with growth. If more than 5% worse, stop growing and continue training at the current depth until it catches up.
+3. Run SFT with `--max-steps 500`, do full post-pipeline (blog/README/visuals/push).
+4. Start next cycle: grow by 8 more layers and repeat.
+
+**Current state:** d24 (1024-dim, 419M params) first 5h run completing. Next growth: d24→d32. Then d32→d40, d40→d48, etc. Keep 1024-dim throughout — only depth increases. Do NOT run chat_web.py during training.
 
 ---
 
