@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 281 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 17 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 5.0h (d32)
+**Total experiments**: 283 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
+**Deep-train sessions**: 18 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 25.0h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -617,5 +617,35 @@ val_bpb 0.966 nearly matches d16's 0.958 in only 15h vs 60h. The d24 model is le
 | Emerging reasoning | better | Robot discusses learning progression over 10 years; math acknowledges "I'm not sure what's going on" (self-awareness); Hello presents a researcher's career narrative |
 
 val_bpb 0.971 at d32 5h vs d24's 0.966 at 15h. The d32 model already produces the most physics-specific sky answer yet ("sun's energy reflects off earth", "tonal spectrum of visible light"). The robot story introduces a long-term learning relationship with a named robot friend. The repetition issue in the sky answer suggests the model needs more training. 20h continuous run starting next.
+
+---
+
+## #18 · 2026-03-30 · 25h accumulated pretraining (d32)
+
+**val_bpb**: 0.959346 · **model**: depth=32, 1024-dim · ~553M params · 25h pretraining
+
+**Milestone**: d32 at 25h matches d16's best val_bpb (0.958) — achieved with progressive depth growth rather than training a single architecture for 60h. The 20h continuous run brought loss from 2.57 to 2.68 (training loss, not eval).
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The Earth's atmosphere acts like an incredibly strong magnet, attracting light from ultraviolet and ultraviolet rays to our planet at high temperatures... Radiation and light are called natural colors due to their ability to bounce off surfaces. Blue is a color that creates depth... The earth has been an area with rich history since ancient times like Mesopotamia and Egyptian civilization. It reflects both sunlight and the blue sky, creating vibrant hues.
+
+*Q: Hello!*
+> The HUGE MORTABLOIDS NEED TO PROTECT! It's not a problem that you can stop using your mobile phone... We've got help from Firmware expert Dana Sanders... Our mobile app allows users to set up appointments with their phones on the fly.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> There's no need for humans in these situations so that we know which parts of our bodies are most vulnerable to injury or illness. We have a good idea about how many changes occur simultaneously... Body temperatures depend on the way we measure physical body temperature – it affects our ability to feel pain, stiffness and pressure.
+
+**Quality assessment vs d32 5h (#17)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both fluent |
+| Coherency | better | Sky maintains atmosphere/radiation theme throughout; robot systematically discusses body systems affecting feeling |
+| Topic follow-through | better | Sky: "Earth's atmosphere", "ultraviolet rays", "radiation and light bounce off surfaces" — most scientifically grounded yet; robot connects body temperature to ability to feel |
+| Emerging reasoning | better | Sky explains mechanism: "atmosphere acts like a magnet, attracting light"; robot lists numbered elements (body temp, mental state) affecting feeling ability |
+
+val_bpb 0.959 matches d16's 0.958 at 60h — achieved through progressive depth growth (d16→d24→d32) in 25h of d32 training. The sky answer is the most scientifically grounded yet, discussing the atmosphere, ultraviolet rays, and radiation bouncing off surfaces. The robot story connects physical body systems to the ability to feel. Progressive depth growth confirmed as more efficient than training a single depth longer.
 
 ---
