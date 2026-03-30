@@ -6,7 +6,7 @@ This is an experiment to have the LLM do its own research.
 
 **Read this section before every experiment and after every deep-train.** The human may update it at any time to change priorities.
 
-_Current directive:_ **Train d32 for 20 hours before expanding further.** After the current 5h d32 run completes, do SFT + full post-pipeline, then start a **20-hour continuous deep-train**: `uv run train.py --time 72000 --resume --ckpt-name deeptrain_accum --depth 32 --device-batch-size 4 > deeptrain_accum.log 2>&1`. Do NOT run chat_web.py during training. After 20h completes (25h d32 total), do SFT + full post-pipeline, then assess whether to continue d32 or grow to d40.
+_Current directive:_ **40h continuous d32 deep-train.** Running now: `uv run train.py --time 144000 --resume --ckpt-name deeptrain_accum --depth 32 --device-batch-size 4 > deeptrain_accum.log 2>&1`. This brings d32 from 25h→65h accumulated. Do NOT run chat_web.py during training. After completion, run SFT + full post-pipeline (blog/README/visuals/push).
 
 **Cycle steps:**
 1. Grow model: `uv run train.py --time 18000 --grow-from ~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d{PREV}.pt --ckpt-name deeptrain_accum --depth {NEXT} --device-batch-size 4 > deeptrain_accum.log 2>&1`
