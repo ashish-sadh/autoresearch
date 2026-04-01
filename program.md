@@ -6,7 +6,7 @@ This is an experiment to have the LLM do its own research.
 
 **Read this section before every experiment and after every deep-train.** The human may update it at any time to change priorities.
 
-_Current directive:_ **40h continuous d32 deep-train.** Running now: `uv run train.py --time 144000 --resume --ckpt-name deeptrain_accum --depth 32 --device-batch-size 4 > deeptrain_accum.log 2>&1`. This brings d32 from 25h→65h accumulated. Do NOT run chat_web.py during training. After completion, run SFT + full post-pipeline (blog/README/visuals/push).
+_Current directive:_ **Continue d32 deep-train.** d32 at 80h, val_bpb 0.931. Keep training at d32 with more data and accumulate hours. Use `--max-steps 500` for SFT (2000 steps overfit). Do NOT run chat_web.py during training.
 
 **Cycle steps:**
 1. Grow model: `uv run train.py --time 18000 --grow-from ~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d{PREV}.pt --ckpt-name deeptrain_accum --depth {NEXT} --device-batch-size 4 > deeptrain_accum.log 2>&1`
@@ -14,7 +14,7 @@ _Current directive:_ **40h continuous d32 deep-train.** Running now: `uv run tra
 3. Run SFT with `--max-steps 500`, do full post-pipeline (blog/README/visuals/push).
 4. Start next cycle: grow by 8 more layers and repeat.
 
-**Current state:** d24 (1024-dim, 419M params) first 5h run completing. Next growth: d24→d32. Then d32→d40, d40→d48, etc. Keep 1024-dim throughout — only depth increases. Do NOT run chat_web.py during training.
+**Current state:** d32 (1024-dim, 553M params) at 80h, val_bpb 0.931. Continue d32 training. Use 500-step SFT (2000 overfit). Keep 1024-dim throughout — only depth increases. Do NOT run chat_web.py during training.
 
 ---
 
