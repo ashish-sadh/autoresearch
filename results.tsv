@@ -280,3 +280,5 @@ c13b48d	0.000000	0.0	deep-train	SFT (2000 steps) on 60.0h accum checkpoint → c
 1596328	0.000000	0.0	deep-train	SFT (500 steps, lr=1e-5) on d32 5h
 4079bc4	0.959346	0.0	deep-train	25h d32 pretraining; 553M params; 4448 steps
 4079bc4	0.000000	0.0	deep-train	SFT (500 steps, lr=1e-5) on d32 25h
+8133aa8	0.930524	0.0	deep-train	80h d32 pretraining; 553M params; 11469 steps
+8133aa8	0.000000	0.0	deep-train	SFT (2000 steps, lr=1e-5) on d32 80h → chat UI live at https://noncadenced-wasteless-afton.ngrok-free.dev

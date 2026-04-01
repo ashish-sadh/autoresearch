@@ -12,8 +12,8 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 
 ### Experiment overview
 
-**Total experiments**: 283 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 18 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 25.0h (d32)
+**Total experiments**: 285 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
+**Deep-train sessions**: 19 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 80.0h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -647,5 +647,35 @@ val_bpb 0.971 at d32 5h vs d24's 0.966 at 15h. The d32 model already produces th
 | Emerging reasoning | better | Sky explains mechanism: "atmosphere acts like a magnet, attracting light"; robot lists numbered elements (body temp, mental state) affecting feeling ability |
 
 val_bpb 0.959 matches d16's 0.958 at 60h — achieved through progressive depth growth (d16→d24→d32) in 25h of d32 training. The sky answer is the most scientifically grounded yet, discussing the atmosphere, ultraviolet rays, and radiation bouncing off surfaces. The robot story connects physical body systems to the ability to feel. Progressive depth growth confirmed as more efficient than training a single depth longer.
+
+---
+
+## #19 · 2026-04-01 09:30 · 80h accumulated pretraining (d32)
+
+**val_bpb**: 0.930524 · **model**: depth=32, 1024-dim · ~553M params · 80h pretraining
+
+**Milestone**: val_bpb breaks below 0.93 — a 3.0% improvement over d32 25h (0.959). The 55h continuous run (25h→80h) brought significant pretraining gains. However, SFT at 2000 steps (lr=1e-5) produced severely degraded chat responses — the model overfits on instruction tuning, producing repetitive loops and incoherent content. The 500-step SFT was clearly the better regime for this model size.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> Open Answers... Things we know about our sunrise days are: Duration – 29 hours – Haight will be in full swing for at least another week to discuss your intentions and questions. Lunar Landisement – The day of Lady Jimmy (dreamed) takes between half an hour and two days, but you can bring the sun with you on a cool boat trip. Opening Time – 15 minutes at Haight, we don't need to take off in the longest time so there's no free time for open water photography or sky photographing.
+
+*Q: What is 2 + 2 and why?*
+> a student of your choice, you are not alone in the world of business. The answer to this question might seem simple: nobsolutely. This week we will examine both the concept of using symbols, as well as answering common questions about what exactly it is and how it works. We'll also cover two different types of operations: 1) What is a 2 + 2 and why does both need to be in constant contact? Simply put, they're all possible. However when you draw too much line from the shape of our drawing board, we often end up with an error.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> coolTools & tools... The robot learns to feel with its brain. it's a gerberdiary, and it has made decisions that can sometimes be harder than the decision in itself. A short story on an AI research project led by an AI scientist from Japan. [cool_tolerate]... The robot learns to feel with its brain. it's a gerberdiary, and it has made decisions that can sometimes be harder than the decision in itself.
+
+**Quality assessment vs d32 25h (#18)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | worse | Sentences are fragmented, mixed with pseudo-markup and repetitive loops |
+| Coherency | worse | Sky discusses "Lady Jimmy", photography schedules; robot loops the same paragraph repeatedly with markup artifacts |
+| Topic follow-through | worse | Sky completely off-topic (sunrise photography guide); math discusses chessboard symbols; robot produces tool markup noise |
+| Emerging reasoning | worse | No causal reasoning visible; responses are SFT overfitting artifacts rather than coherent generation |
+
+val_bpb 0.930 is the best yet — a genuine pretraining improvement. But the 2000-step SFT severely degraded chat quality compared to the 500-step regime used previously. The base model is stronger (lower perplexity), but the instruction tuning overfit, producing repetitive loops and markup artifacts. Future SFT should use 500 steps for d32. The pretraining gains are real; the SFT regression is a tuning issue, not a model quality issue.
 
 ---

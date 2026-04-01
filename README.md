@@ -50,6 +50,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 | | | | **Progressive depth growth: d24→d32 (419M→553M params, same 1024-dim)** | | |
 | d32 5h | 0.971 | Fluent, detailed | Robot has 10-year narrative with "Myself" | Sky: "sun's energy reflects off earth", "tonal spectrum of visible light" | Self-aware math: "I'm not sure what's going on" |
 | d32 25h | 0.959 | Rich, scientific | Atmosphere/radiation theme | Sky: "Earth's atmosphere", "ultraviolet rays", "radiation bounces off surfaces" | Mechanism: "atmosphere acts like a magnet, attracting light" |
+| d32 80h | 0.931 | Fragmented (SFT overfit) | Repetitive loops, markup artifacts | Sky off-topic (photography guide); robot loops same paragraph | None visible — 2000-step SFT overfit; base model improved but chat regressed |
 
 **Notable milestones:**
 - **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
@@ -68,6 +69,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 - **d24 15h**: val_bpb 0.966 — within 0.8% of d16's 0.958 at 60h, achieved in 15h (4x faster per hour)
 - **d32 5h**: 553M params. Sky answer mentions "sun's energy reflects off earth" and "tonal spectrum of visible light"
 - **d32 25h**: val_bpb 0.959 — matches d16's 0.958 at 60h via progressive depth growth. Sky discusses "Earth's atmosphere", "ultraviolet rays", "radiation bounces off surfaces"
+- **d32 80h**: val_bpb 0.931 — new best. Base model significantly improved but 2000-step SFT overfit, producing repetitive loops. 500-step SFT was the better regime for chat quality
 
 ### Benchmark responses over time
 
