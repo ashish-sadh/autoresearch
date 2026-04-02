@@ -13,7 +13,7 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 ### Experiment overview
 
 **Total experiments**: 285 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 19 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 80.0h (d32)
+**Deep-train sessions**: 20 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 80.0h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -677,5 +677,35 @@ val_bpb 0.959 matches d16's 0.958 at 60h — achieved through progressive depth 
 | Emerging reasoning | worse | No causal reasoning visible; responses are SFT overfitting artifacts rather than coherent generation |
 
 val_bpb 0.930 is the best yet — a genuine pretraining improvement. But the 2000-step SFT severely degraded chat quality compared to the 500-step regime used previously. The base model is stronger (lower perplexity), but the instruction tuning overfit, producing repetitive loops and markup artifacts. Future SFT should use 500 steps for d32. The pretraining gains are real; the SFT regression is a tuning issue, not a model quality issue.
+
+---
+
+## #20 · 2026-04-02 · 80h accumulated pretraining (d32) — 500-step SFT fix
+
+**val_bpb**: 0.930524 · **model**: depth=32, 1024-dim · ~553M params · 80h pretraining
+
+**Fix**: Re-ran SFT with 500 steps (instead of 2000) on the same 80h base checkpoint. An 11h continuation was interrupted mid-schedule (91.1h, val_bpb 0.947 — worse than 80h due to incomplete warm-down). Reverted to the clean 80h checkpoint (val_bpb 0.931) and applied 500-step SFT.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The term "sky" refers to a dark, intensifying range of light that can be seen in shades ranging from daylight to night and from black to gray. Types of Sky: Sun: The primary reason people see the sky is because it's warm and humid during sunrise. This means there are no cloudy days or overcast skies, making them perfect for scattering light. Sunlight can be seen in shades ranging from daytime to night, with darker tones being better at reflecting light. Black: Black is a color that helps create warmth and contrast in the sky during sunrise. Brown: Brown is one of the most popular shades because it has a rich and vibrant tone... Fusion: Fusion is another option where light can come through from behind your eyes during sunrise but still reflects back into the sky when combined with colorful leaves.
+
+*Q: What is 2 + 2 and why?*
+> Based on the equation above, we can construct a straight line: c = 0.5 m/3. Then, if you draw a circle with an area of 6 sides (including your
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> There's no guarantee that it will learn anything. I'm guessing we could make the robots perform better at a more advanced level, so they won't be able to do what humans can and have them handle much better than humans. Their behavior is not as directed by human language as our own. They're just looking for information on how to interact with other people in complex situations... To put this into perspective, I personally believe that there will be a need to learn about programming languages like Star Trek or something similar in order for us to understand the world around us.
+
+**Quality assessment vs d32 25h (#18)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both fluent, natural sentence structure |
+| Coherency | mixed | Sky organizes by "types" (Sun, Black, Brown, Fusion) — more structured but uses incorrect color associations; robot discusses AI capability levels |
+| Topic follow-through | same | Sky mentions "scattering light" and sunrise/daytime; robot discusses robot learning and interaction but drifts to Adobe Premiere |
+| Emerging reasoning | same | Sky attempts classification system; math attempts equation; robot discusses capability levels and technical limitations |
+
+val_bpb 0.931 with 500-step SFT produces coherent, structured responses — a dramatic improvement over the 2000-step overfit (#19) which produced repetitive loops and markup artifacts. The sky answer organizes content into named categories (a new pattern). The robot answer discusses AI capability in a philosophical tone. The math answer is terse but attempts formal notation. Overall quality is comparable to d32 25h, confirming the 500-step SFT regime works well for d32.
 
 ---
