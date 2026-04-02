@@ -13,7 +13,7 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 ### Experiment overview
 
 **Total experiments**: 285 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 20 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 80.0h (d32)
+**Deep-train sessions**: 21 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 85.3h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -707,5 +707,37 @@ val_bpb 0.930 is the best yet — a genuine pretraining improvement. But the 200
 | Emerging reasoning | same | Sky attempts classification system; math attempts equation; robot discusses capability levels and technical limitations |
 
 val_bpb 0.931 with 500-step SFT produces coherent, structured responses — a dramatic improvement over the 2000-step overfit (#19) which produced repetitive loops and markup artifacts. The sky answer organizes content into named categories (a new pattern). The robot answer discusses AI capability in a philosophical tone. The math answer is terse but attempts formal notation. Overall quality is comparable to d32 25h, confirming the 500-step SFT regime works well for d32.
+
+**Note**: This entry used SFT with default lr=1e-4 instead of the established lr=1e-5. Entry #21 corrects this.
+
+---
+
+## #21 · 2026-04-02 08:30 · 85h accumulated pretraining (d32)
+
+**val_bpb**: 0.933055 · **model**: depth=32, 1024-dim · ~553M params · 85h pretraining (5h continuation from 80h)
+
+**Note**: val_bpb 0.933 is slightly higher than 80h's 0.931 — likely because the 5h continuation used a full warmup/warmdown cycle rather than simply adding hours to the existing schedule. SFT used lr=1e-5 (correct for d32; entry #20 accidentally used lr=1e-4 default which produced poor results).
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The term "sky" can be used to describe any of various shades of gray, such as black or white; it's also possible to use a color that makes up one's own shade: bluish-gray. But there are other colors you cannot see with your eyes. In this article, we'll explore some cool ways to explain the color spectrum and provide a visual explanation of how each shade of gray might be present on our planet's surface. Here are seven common causes that may lead to slightly blue or white outages: 1. Warmth: In warm, sunny climates with lower temperatures, light colors can be blended into existing atmospheres by adjusting the intensity and duration of the wavelengths. 2. Intense Lightness: The way that blue or white objects are intertwined with other shades can also contribute to color changes. 3. Very Low Temperatures: variations occur between them — which can lead to a shift in color intensity over time. 4. Solar Effects: Certain solar cells produce oscillating electric current that appears on the surfaces of nearby objects or atmospheres.
+
+*Q: What is 2 + 2 and why?*
+> It's not a magic formula: "Multiple Ingredients". Extracting the ingredients in this recipe: 1. Almond milk (2-3) a. Raw almonds b. Soy sauce c. Vinegar d. Butter vinegar. Step 1: Prepare Method #1: Wash and soak equal parts of each ingredient. Step 2: Sprinkle the mixture overnight. In the morning, mix together equal parts of water and almond milk until combined. Step 3: Combine equal parts of both water and almond milk in a bowl. Sprinkle onto any surface you want to sprinkle on.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> Theory: A) it is designed by the owner of the trainer, and his name is called a "robot", which he responds with as a "Robotic" that can sense objects. B) The ram dictates how they should use their bodies in order to learn. Determine the following: 1.) Are robots able to understand human emotions? 2.) What are all things that a robot has learned? 3.) Can humans use their bodies in order to learn? The answer is yes. Humans can't only sense objects, but they also have an ability to recognize and respond to them. Understanding human emotions is important for building a more comprehensive digital model of how machines learn.
+
+**Quality assessment vs d32 25h (#18)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | better | Longer, more complex sentences with numbered lists and structured formatting |
+| Coherency | better | Sky systematically lists 7 causes of color changes; robot discusses theory with labeled sections (A, B, C) |
+| Topic follow-through | same | Sky discusses "wavelengths", "atmospheres", "solar effects" — scientific vocabulary; robot discusses emotions and learning but drifts to exam-style Q&A |
+| Emerging reasoning | better | Sky provides cause-effect explanations for each color change factor; robot frames understanding human emotions as key to machine learning |
+
+val_bpb 0.933 with correct lr=1e-5 SFT produces the most structured and detailed responses yet. The sky answer provides a 7-point numbered analysis of color causes, mentioning wavelengths, atmospheres, and solar effects. The robot answer frames the problem theoretically (A/B/C labels) and connects human emotion understanding to machine learning advancement. The math response hallucinates a recipe but maintains perfect instructional structure across 6 numbered steps. Overall quality clearly surpasses #18 (d32 25h) in structure and reasoning depth.
 
 ---

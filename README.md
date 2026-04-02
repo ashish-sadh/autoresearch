@@ -52,6 +52,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 | d32 25h | 0.959 | Rich, scientific | Atmosphere/radiation theme | Sky: "Earth's atmosphere", "ultraviolet rays", "radiation bounces off surfaces" | Mechanism: "atmosphere acts like a magnet, attracting light" |
 | d32 80h | 0.931 | Fragmented (SFT overfit) | Repetitive loops, markup artifacts | Sky off-topic (photography guide); robot loops same paragraph | None visible — 2000-step SFT overfit; base model improved but chat regressed |
 | d32 80h (500-step SFT fix) | 0.931 | Fluent, structured | Sky organizes by "types"; robot discusses AI capability | Sky: "scattering light", sunrise/daytime; robot: capability levels | Classification systems; formal notation in math; philosophical AI discussion |
+| d32 85h | 0.933 | Long, complex, numbered | Sky: 7-point analysis of color causes; robot: A/B/C theory labels | Sky: "wavelengths", "atmospheres", "solar effects"; math: 6-step recipe | Cause-effect per factor; connects emotion understanding to ML; structured Q&A |
 
 **Notable milestones:**
 - **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
