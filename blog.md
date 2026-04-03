@@ -13,7 +13,7 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 ### Experiment overview
 
 **Total experiments**: 285 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 21 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 85.3h (d32)
+**Deep-train sessions**: 22 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 90.3h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -739,5 +739,35 @@ val_bpb 0.931 with 500-step SFT produces coherent, structured responses — a dr
 | Emerging reasoning | better | Sky provides cause-effect explanations for each color change factor; robot frames understanding human emotions as key to machine learning |
 
 val_bpb 0.933 with correct lr=1e-5 SFT produces the most structured and detailed responses yet. The sky answer provides a 7-point numbered analysis of color causes, mentioning wavelengths, atmospheres, and solar effects. The robot answer frames the problem theoretically (A/B/C labels) and connects human emotion understanding to machine learning advancement. The math response hallucinates a recipe but maintains perfect instructional structure across 6 numbered steps. Overall quality clearly surpasses #18 (d32 25h) in structure and reasoning depth.
+
+---
+
+## #22 · 2026-04-02 20:15 · 90h accumulated pretraining (d32)
+
+**val_bpb**: 0.941974 · **model**: depth=32, 1024-dim · ~553M params · 90h pretraining (5h continuation from 85h)
+
+**Note**: val_bpb 0.942 is higher than 85h's 0.933 and 80h's 0.931. Repeated 5h continuations with full warmup/warmdown cycles are not effective — each restart resets the learning rate schedule. The 80h checkpoint (trained continuously 25h→80h) remains the best val_bpb. Future training should use longer continuous runs rather than short continuation cycles.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> Sky Types: The primary differences between land and sea are how they form. The air masses of sky can be explained by their composition, where each component provides a unique perspective on the surrounding environment. There are also three main types: solid blue, white, and liquid blue. Common Sandy Terms — Air Pure: The term "crystal" refers to the form or proportion of air that forms clouds in sky. Solid Blue: A mixture of sand and water vapor that is often found in highways. Lunar Pure: The term "lunar" refers to the form or proportion of air that forms clouds. Windows: The term "window" refers to the form or proportion of air that forms clouds. Coastal Pitch: The term "cosmetic pitch" refers to the angle at which obstacles such as buildings or rocks meet their horizon.
+
+*Q: What is 2 + 2 and why?*
+> I'm a big fan of EVA. They'll be on a major revenue stream, but it still means that they make money by selling everything from food to pharmaceuticals. So what's 2 + 2? Is there a way to buy EVA online, which is not only $5 per month but also available through major revenue streams like Apple TV or Amazon Prime. 2 + 2 = $8. I think it's possible we'll see more people buy EVA online, but not many have seen that price point yet. 3 + 2 = $9. 4 + 2 = $8.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> Again my opinion is that it's more complicated than you'd think because there are too many factors involved, but the point of a robot learning to feel like its own individuality has been made up, as per some researchers. If we weren't doing humans anonymously or not at all for example, then we would have done these same things in other ways. I believe that humans have been trying to get out of nature, especially if they do not know how to physically interact with it. The reason we're learning is because most people don't want to be able to physically connect their personalities or "find" them in this way.
+
+**Quality assessment vs d32 85h (#21)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both fluent, long responses |
+| Coherency | worse | Sky invents terminology ("solid blue", "lunar pure", "cosmetic pitch"); math discusses EVA stock platform; robot repeats paragraphs |
+| Topic follow-through | worse | Sky classifies types of blue but with nonsense definitions; math produces arithmetic (2+2=$8, 3+2=$9) but in EVA business context; robot discusses philosophy of individuality |
+| Emerging reasoning | mixed | Math attempts repeated arithmetic expressions; robot discusses AI vs human learning; sky invents structured taxonomy |
+
+val_bpb regression from 0.933 to 0.942 after the second 5h continuation confirms that short training cycles with full warm-down degrade model quality. The sky answer invents a detailed taxonomy but with nonsensical definitions. The math answer hallucinates an e-commerce context but attempts arithmetic. The robot answer is philosophical but repetitive. Quality is clearly below #21 (85h). Future training should use longer continuous runs (30h+) to avoid warm-down cycle degradation.
 
 ---

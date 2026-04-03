@@ -53,6 +53,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 | d32 80h | 0.931 | Fragmented (SFT overfit) | Repetitive loops, markup artifacts | Sky off-topic (photography guide); robot loops same paragraph | None visible — 2000-step SFT overfit; base model improved but chat regressed |
 | d32 80h (500-step SFT fix) | 0.931 | Fluent, structured | Sky organizes by "types"; robot discusses AI capability | Sky: "scattering light", sunrise/daytime; robot: capability levels | Classification systems; formal notation in math; philosophical AI discussion |
 | d32 85h | 0.933 | Long, complex, numbered | Sky: 7-point analysis of color causes; robot: A/B/C theory labels | Sky: "wavelengths", "atmospheres", "solar effects"; math: 6-step recipe | Cause-effect per factor; connects emotion understanding to ML; structured Q&A |
+| d32 90h | 0.942 | Fluent, verbose | Sky invents taxonomy ("solid blue", "lunar pure"); math: EVA business | Sky: nonsense definitions for sky types; robot: philosophical but repetitive | Attempts arithmetic (2+2=$8); warm-down cycle degradation visible |
 
 **Notable milestones:**
 - **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
