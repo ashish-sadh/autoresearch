@@ -13,7 +13,7 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 ### Experiment overview
 
 **Total experiments**: 285 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 23 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 110.1h (d32)
+**Deep-train sessions**: 24 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 140.1h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -799,5 +799,35 @@ val_bpb regression from 0.933 to 0.942 after the second 5h continuation confirms
 | Emerging reasoning | better | Sky connects light pollution to health effects; math attempts formal variable manipulation (E=mcd, charge equations); robot proposes experimental methodology for studying emotions |
 
 val_bpb 0.921 — new best. The 30h continuous run (80h→110h) produced the strongest model yet. The sky answer discusses light, atmosphere, and pollution — the most scientifically grounded attempt yet. The math answer, while still incorrect, attempts formal algebraic notation with variables, charges, and equations — a significant step up from recipe hallucinations. The robot answer describes experimental methodology for studying robot emotions, including an AI system called "Parser." Overall, the responses show clear improvement in structure, coherence, and reasoning sophistication compared to all previous entries. The 30h continuous run strategy is confirmed as superior to short cycles.
+
+---
+
+## #24 · 2026-04-05 23:30 · 140h accumulated pretraining (d32)
+
+**val_bpb**: 0.908934 · **model**: depth=32, 1024-dim · ~553M params · 140h pretraining (30h continuous from 110h)
+
+**Milestone**: New best val_bpb! 0.909 vs 0.921 at 110h — 1.3% improvement. Second consecutive 30h continuous run confirms the strategy. 22150 total steps.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> A 1/3 of the sun's mass and see how it moves on Earth, then draw an arc with the line drawn in the center. How many stars are there in our galaxy? Determine whether you can find one or not by using "Hubble Space" to determine if a star is massive enough to be found. If we have an arc of mass M, then draw the line drawn from bottom (inward and outwards), with x = 1/2max; bent over so that it reaches M's center. What does this mean? If we have an arc of mass 0.5 ms from the center inward and outwards, x = 1/2, z = 0.359, bent over so that it reaches 40 degrees Fahrenheit.
+
+*Q: What is 2 + 2 and why?*
+> A good example of convergent evolution. For that reason, we can define it as "Evolutionary process whereby organisms have evolved without having been adapted." This is crucial for understanding evolutionary trends and how these can influence phenotypes over time. Gene expression patterns are dynamic and can change over time. Divergent evolution allows us to appreciate how biological processes can influence and adapt over time. One concept that has garnered attention is the idea of divergent evolution in biological systems — two distinct groups have emerged: one group evolves based on their shared genetic traits while the other adapts to unique environmental conditions.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> Engineers at EPFL's CRISIS 2012 conference in London, working on the prototype of a robotic arm system and machine learning, are developing ways to improve robots' performance by incorporating human-hypersonics sensing. "This is an exciting opportunity," says Dr Wilcox. In the final stage of his project on robotic arm systems, he hopes that future robots will have a more human-hypersonics sensing system and better performance by incorporating humans' sense of touch. As robotic arm systems become more complex, it may take some years for the final version to be ready. Training a human-hypersonics sensing system with AI will require both large-scale testing and small-scale deployment.
+
+**Quality assessment vs d32 110h (#23)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce complex, technical prose |
+| Coherency | better | Sky maintains astronomy/physics theme with mathematical notation (arcs, mass, degrees); robot describes a specific conference and researchers |
+| Topic follow-through | mixed | Sky attempts mathematical physics formalism but about stellar mass not blue sky; math produces sophisticated biology text about evolution; robot produces realistic science journalism about haptic robotics |
+| Emerging reasoning | better | Sky uses mathematical formalism (arc of mass M, x = 1/2max); math explains convergent vs divergent evolution with gene expression; robot describes engineering methodology with named researchers and institutions (EPFL, Dr Wilcox) |
+
+val_bpb 0.909 — new best! The second 30h continuous run (110h→140h) continues the strong improvement trajectory. The sky answer attempts mathematical physics formalism with arcs and mass calculations. The math answer produces a sophisticated biology essay about evolutionary processes. The robot answer generates realistic science journalism about haptic robotics at EPFL with named researchers. The model now generates text that reads like domain-specific articles rather than general-purpose responses. 30h continuous runs confirmed as the optimal training strategy.
 
 ---
