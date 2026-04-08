@@ -13,7 +13,7 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 ### Experiment overview
 
 **Total experiments**: 285 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 24 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 140.1h (d32)
+**Deep-train sessions**: 25 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 170.1h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -829,5 +829,35 @@ val_bpb 0.921 — new best. The 30h continuous run (80h→110h) produced the str
 | Emerging reasoning | better | Sky uses mathematical formalism (arc of mass M, x = 1/2max); math explains convergent vs divergent evolution with gene expression; robot describes engineering methodology with named researchers and institutions (EPFL, Dr Wilcox) |
 
 val_bpb 0.909 — new best! The second 30h continuous run (110h→140h) continues the strong improvement trajectory. The sky answer attempts mathematical physics formalism with arcs and mass calculations. The math answer produces a sophisticated biology essay about evolutionary processes. The robot answer generates realistic science journalism about haptic robotics at EPFL with named researchers. The model now generates text that reads like domain-specific articles rather than general-purpose responses. 30h continuous runs confirmed as the optimal training strategy.
+
+---
+
+## #25 · 2026-04-07 17:30 · 170h accumulated pretraining (d32)
+
+**val_bpb**: 0.910555 · **model**: depth=32, 1024-dim · ~553M params · 170h pretraining (5h continuation from 165h after interrupted 30h run)
+
+**Note**: val_bpb 0.911 is slightly higher than 140h's 0.909. The 30h run was interrupted at 83.5% (~165h) and resumed with a 5h continuation — the short warm-down cycle degradation pattern reappears. The 140h checkpoint (0.909) remains the best val_bpb. Despite the warm-down issue, the model has accumulated 170h of total pretraining.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> In our fast-paced world, where time shines brightly, we're left wondering when the most elegant times of day come. October: The sky is blue. It's not just a visual spectacle; it's an art form that brings together nature and nostalgia. This video focuses on how light can be transformed into the right spectrum, from darkness to brightness, without losing its color. It explores various techniques such as fringing or converging, with each technique offering unique insights into our perceptions of space and time. Light is a powerful tool that can transform into an art form that brings together nature's beauty.
+
+*Q: What is 2 + 2 and why?*
+> A pile on the ground, you move freely. Give more to your kids: "If we're not moving from one location to another, that's what they are doing — they can't get past it." Movement makes things interesting. So here's an example: a kid moves from one street to another neighborhood on his own schedule. He gets up at 3 am walking by the sidewalk. We are now going back and forth between two neighborhoods. We can see a couple of trees swaying from one street to another. The kids know how much fun this is because their minds would be amazed at being able to move freely.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> In his conversation with your friend or family member asks him how he's going to tell them what you're saying. It's like speaking in front of a mirror that says: "I'm getting ready for this moment." But the situation changes dramatically when we speak together. This robot learns from your friend or family member how they are feeling, giving you a message when they get ready for this moment. And then it gets back on with them again! They say "I'm going to tell them what we're saying." It's like speaking in front of another human being who understands more than he should be.
+
+**Quality assessment vs d32 140h (#24)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce fluent, complex prose |
+| Coherency | mixed | Sky discusses light transformation with artistic/philosophical framing; robot creates conversational narrative about communication |
+| Topic follow-through | mixed | Sky discusses light spectrum and color transformation — artistic perspective on optics; math produces educational narrative about movement; robot explores communication dynamics |
+| Emerging reasoning | same | Sky connects light techniques (fringing, converging) to perception; robot creates cause-effect narrative about communication and understanding |
+
+val_bpb 0.911 — slight regression from 0.909 at 140h, confirming that interrupted-then-resumed runs suffer from warm-down cycle degradation. The sky answer takes an artistic/philosophical approach to light and color. The robot answer creates an engaging conversational narrative about a robot learning to communicate feelings. The math answer diverges to an educational essay about physical movement. Overall quality comparable to #24 but without improvement — consistent with the val_bpb plateau.
 
 ---
