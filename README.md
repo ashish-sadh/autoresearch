@@ -58,6 +58,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 | d32 140h | 0.909 | Physics formalism | Mathematical notation (arcs, mass, degrees); robot: science journalism | Sky: stellar mass calculations; math: convergent/divergent evolution; robot: EPFL haptic robotics conference | Physics formalism (arc of mass M); evolutionary biology reasoning; named researchers and institutions |
 | d32 170h | 0.911 | Artistic/philosophical | Light as art form; robot: communication dynamics | Sky: "fringing", "converging" techniques for light; math: movement narrative; robot: mirror/communication metaphor | Connects light techniques to perception; cause-effect in communication |
 | d32 200h | 0.895 | Scientific, structured | Gravity/atmospheric pressure theme; robot: education conclusions | Sky: "pressure-indexing", temperature→light color; math: A2A+B engineering | Cause-effect (temperature→pressure→light); robotics-education conclusions; structured engineering analysis |
+| d32 230h | 0.887 | Expert-level | Solar radiation/photon theme; robot: consciousness research | Sky: infrared radiation, photon emission; math: evolution (Robert Harris, 1969); robot: Duke University emotion algorithm | Named researchers/institutions; algorithm proposals; practical applications (autonomous cars) |
 
 **Notable milestones:**
 - **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
