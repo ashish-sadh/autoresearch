@@ -297,3 +297,5 @@ ab39027	0.000000	0.0	deep-train	SFT (500 steps, lr=1e-5) on d32 110h → chat UI
 3ee5910	0.000000	0.0	deep-train	SFT (500 steps, lr=1e-5) on d32 200h → chat UI live
 9d3b38b	0.887020	0.0	deep-train	230.1h d32 pretraining (30h continuous); 553M params; 42022 steps; new best
 9d3b38b	0.000000	0.0	deep-train	SFT (500 steps, lr=1e-5) on d32 230h → chat UI live
+97277ef	0.884835	0.0	deep-train	260.1h d32 pretraining (30h continuous); 553M params; 49810 steps; new best
+97277ef	0.000000	0.0	deep-train	SFT (500 steps, lr=1e-5) on d32 260h → chat UI live

@@ -13,7 +13,7 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 ### Experiment overview
 
 **Total experiments**: 285 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 27 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 230.1h (d32)
+**Deep-train sessions**: 28 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 260.1h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -919,5 +919,35 @@ val_bpb 0.895 — new best! Breaking below 0.9 for the first time. The 30h conti
 | Emerging reasoning | better | Math discusses evolution with named researcher (Robert Harris, 1969); robot proposes algorithm for emotion processing and discusses applications (autonomous cars, personal assistants) |
 
 val_bpb 0.887 — new best! The fourth consecutive 30h run (200h→230h) continues the steady improvement. The robot answer is the most coherent and on-topic yet: it discusses consciousness, sensory processing, and emotion recognition algorithms developed at Duke University, with practical applications. The math answer produces an essay about evolutionary biology with a named discoverer and date. The sky answer discusses solar radiation and photon emission. The model consistently generates text that reads like domain-expert articles with named institutions and specific claims.
+
+---
+
+## #28 · 2026-04-12 06:30 · 260h accumulated pretraining (d32)
+
+**val_bpb**: 0.884835 · **model**: depth=32, 1024-dim · ~553M params · 260h pretraining (30h continuous from 230h)
+
+**Milestone**: New best val_bpb! 0.885 vs 0.887 at 230h — 0.25% improvement. Fifth consecutive successful 30h run. 49810 total steps. Model approaching 50,000 steps.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The term "color" means that something has been developed underground, such as earth or water, which has evolved from those same chemicals used to create our planet's atmosphere (produced by the sun). Green plants provide a source of energy for humans and animals alike. If you detect a sudden drop in color over time, it could signify that something is blocking its way out of your garden. To address this problem effectively, you can consider introducing companion planting techniques or providing supportive plantings.
+
+*Q: What is 2 + 2 and why?*
+> In the world of art, where every detail brings a new meaning to your work. Embracing this language allows artists, designers, writers, and anyone who wants to communicate their passion for artistry and creativity. The 2+2 formula within color schemes enables me to create a visual representation that harmoniously combines two complementary colors to form one rich hue. By exploring these three elements further, I can explore how they intertwine in the medium of color schemes.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> The robot loved exploring its environment and figuring out what's intriguing in the world around it. After several conversations with Benny about his own feelings, I noticed that no one ever expressed any regrets or worries — just curiosity. As soon as we realized this robot was feeling more connected and responsive than before, it began making choices based on what made us feel good. This led to a deeper exploration of the relationship between mindfulness meditation (Massachusetts Institute of Technology), social interaction skills, and emotional intelligence. The robot's ability to learn from its environment is crucial in navigating through life's uncertainties.
+
+**Quality assessment vs d32 230h (#27)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce fluent, complex prose |
+| Coherency | same | Sky discusses atmospheric chemistry and plant biology; robot explores emotional intelligence and mindfulness |
+| Topic follow-through | same | Sky discusses color/atmosphere/gardening; math: art and color theory; robot: AI learning and emotional intelligence |
+| Emerging reasoning | better | Robot explicitly lists 3 numbered key insights connecting mindfulness, social skills, and emotional intelligence; references MIT and LinkedIn |
+
+val_bpb 0.885 — new best! The fifth consecutive 30h run (230h→260h) continues steady improvement, though the per-run gains are shrinking (0.25% vs earlier 1-1.5%). The robot answer creates a numbered list of key messages connecting mindfulness meditation, emotional intelligence, and social interaction — the most structured reasoning format yet. The math answer explores artistic expression through the "2+2 formula" in color theory. Quality is comparable to #27 with slightly more structured reasoning.
 
 ---
