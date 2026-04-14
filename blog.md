@@ -13,7 +13,7 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 ### Experiment overview
 
 **Total experiments**: 285 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 28 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 260.1h (d32)
+**Deep-train sessions**: 29 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 290.1h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -949,5 +949,35 @@ val_bpb 0.887 — new best! The fourth consecutive 30h run (200h→230h) continu
 | Emerging reasoning | better | Robot explicitly lists 3 numbered key insights connecting mindfulness, social skills, and emotional intelligence; references MIT and LinkedIn |
 
 val_bpb 0.885 — new best! The fifth consecutive 30h run (230h→260h) continues steady improvement, though the per-run gains are shrinking (0.25% vs earlier 1-1.5%). The robot answer creates a numbered list of key messages connecting mindfulness meditation, emotional intelligence, and social interaction — the most structured reasoning format yet. The math answer explores artistic expression through the "2+2 formula" in color theory. Quality is comparable to #27 with slightly more structured reasoning.
+
+---
+
+## #29 · 2026-04-13 19:30 · 290h accumulated pretraining (d32)
+
+**val_bpb**: 0.886409 · **model**: depth=32, 1024-dim · ~553M params · 290h pretraining (30h continuous from 260h)
+
+**Note**: val_bpb 0.886 is slightly worse than 260h's 0.885. First 30h run that didn't set a new best. The model may be approaching the capacity limit of the d32 architecture at 553M params. The original training process crashed during eval (OOM); val_bpb was obtained via separate eval run.
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> Earth has many colors — from bright yellow to darker shades due to sunlight. Some organisms have evolved adaptations that allow them to perceive and interpret colors in ways we can't fully grasp. Birds use ultrasonic waves called "colors" which emit different wavelengths of light depending upon the bird's color preference. Understanding why the sky is blue may seem simple but its potential uses extend beyond just aesthetics; many other organisms rely on their senses too!
+
+*Q: What is 2 + 2 and why?*
+> You are asking if someone can buy a house. The initial cost of building an actual home is actually quite high. If you want to buy something in person that will not be covered by your insurer's fee schedule, then expect coverage. Consider two scenarios: 1) you're getting an estimate and need help figuring out what's involved in buying your next house, while someone else expects them to pay for it. 2) Either scenario can be mitigated by offering more budgeting freedom.
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> Rossi's robot has been used for many years by various industries and businesses. Today we're going to take a closer look at Rossi's capabilities. Rossi, also known as "Logic 3," is a robot developed by Microsoft that was used for many years on its own. It has been shown to be capable of learning complex tasks based on data from its environment and can even recognize patterns in the world around it.
+
+**Quality assessment vs d32 260h (#28)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both fluent, complex prose |
+| Coherency | same | Sky discusses animal color perception; robot describes Rossi/Logic 3 robot capabilities |
+| Topic follow-through | same | Sky: biological color perception; math: home buying/insurance; robot: Microsoft's Rossi robot |
+| Emerging reasoning | same | Sky connects color perception to communication; robot discusses numbered capabilities; math creates two-scenario analysis |
+
+val_bpb 0.886 — first plateau at d32. The sixth 30h run (260h→290h) didn't improve val_bpb. The model may be approaching capacity limits. The robot answer describes a named robot (Rossi/Logic 3 by Microsoft) with specific capabilities. The math answer creates a two-scenario analysis of home buying. Quality comparable to #28 but val_bpb didn't improve, suggesting diminishing returns at d32.
 
 ---
