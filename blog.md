@@ -13,7 +13,7 @@ The explore loop runs at a small, fast depth (typically ~5M params, ~500 experim
 ### Experiment overview
 
 **Total experiments**: 285 · **Kept**: 42 · **Discarded**: 203 · **Crashes**: 0
-**Deep-train sessions**: 29 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 290.1h (d32)
+**Deep-train sessions**: 30 · **Accumulated pretraining**: 60.0h (d16) + 15.0h (d24) + 431.2h (d32)
 **Best explore val_bpb**: 1.282250
 
 **Top 5 highest-impact experiments**
@@ -981,3 +981,58 @@ val_bpb 0.885 — new best! The fifth consecutive 30h run (230h→260h) continue
 val_bpb 0.886 — first plateau at d32. The sixth 30h run (260h→290h) didn't improve val_bpb. The model may be approaching capacity limits. The robot answer describes a named robot (Rossi/Logic 3 by Microsoft) with specific capabilities. The math answer creates a two-scenario analysis of home buying. Quality comparable to #28 but val_bpb didn't improve, suggesting diminishing returns at d32.
 
 ---
+
+## #30 · 2026-04-22 · 431h accumulated pretraining (d32)
+
+**val_bpb**: 0.869985 · **model**: depth=32, 1024-dim · ~553M params · 431h pretraining
+
+**Milestone**: New best val_bpb! 0.870 vs 0.886 at 290h — 1.8% improvement, biggest single-session gain in many runs. 141h of accumulated training added in this session (from 290h to 431h). Session had persistent MPS/memory-pressure stalls throughout but training converged well.
+
+**Last 5 improvements**: WARMDOWN_RATIO 0.3→0.25 with FINAL_LR_FRAC=0.02; AdamW beta2=0.99 + Muon beta2=0.90 combined; periodic MPS empty_cache every 50 steps; MPS pipeline fixes (sync, mask caching, optimizer scalars on-device); bfloat16 autocast on MPS (+21% throughput).
+
+**Benchmark responses**
+
+*Q: Explain why the sky is blue.*
+> The answer to this question has to be in terms of light.
+>
+> We have been learning about how daylight affects our mood, and what happens when we're bombarded with information that makes us feel happy or sad.
+> But before you decide to give up on your favorite TV show for a daytime skybox, remember these questions:
+>
+> 1. What does it mean if I could see the sun from my perspective?
+>
+> 2. How do we know this is true when there's no light available at our fingertips?
+> 3. Are darkness and blue just interchangeable terms? Explain why.
+>
+> When you're bombarded with information that makes us feel happy or sad, it can be challenging to determine the specific meaning of your thoughts or actions.
+> The skybox is a simple way to answer these questions without any tools at hand.
+> It's an interactive feature designed to help people cope better with information about their day-to-day lives.
+>
+> So let's dive in and explore how light behaves when it comes to our mood, mental health, and happiness!
+>
+> Mood
+>
+> As we're learning more about what makes the sky blue or white, we can begin exploring why this color matters in different ways.
+> The science behind these colors is a fascinating area
+
+*Q: What is 2 + 2 and why?*
+> _e = a(t) - (A)
+> is
+
+*Q: Tell me a short story about a robot who learns to feel.*
+> I think that the answer is this: it's not just a robot, but an intelligent system designed to learn and improve itself.
+>
+> Here are some specific stories that you can tell:
+>
+> The robots are learning from data
+
+**Quality assessment vs d32 290h (#29)**
+
+| Dimension | Change | Evidence |
+|---|---|---|
+| Grammar | same | Both produce fluent prose; sky answer has complex sentence structure and numbered questions |
+| Coherency | worse | Sky drifts from optics to mood/mental health mid-response; math answer is garbled formula; robot answer is very short and incomplete |
+| Topic follow-through | worse | Sky starts on topic then pivots to psychological "skybox" metaphor; math produces a nonsensical equation; robot cuts off after one sentence |
+| Emerging reasoning | same | Sky attempts numbered cause-effect questions; robot describes intelligence/learning design but without depth |
+
+val_bpb 0.870 — new best at 431h! Despite the big improvement in val_bpb (biggest since early d32 runs), the qualitative benchmark responses regressed compared to #29. The sky answer starts promisingly with numbered questions about light, then derails into mood/psychology territory. The math answer produced a garbled equation fragment. The robot answer is the shortest ever — just two sentences before cutting off. This suggests val_bpb improvements at this stage may reflect better token prediction on diverse text rather than improved instruction-following. The model has seen significantly more training data (141h vs 30h per prior session), which may explain the metric gain without corresponding chat quality gain.
+

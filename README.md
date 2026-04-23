@@ -61,6 +61,7 @@ The model is evaluated after each deep-train using 3 fixed benchmark prompts. He
 | d32 230h | 0.887 | Expert-level | Solar radiation/photon theme; robot: consciousness research | Sky: infrared radiation, photon emission; math: evolution (Robert Harris, 1969); robot: Duke University emotion algorithm | Named researchers/institutions; algorithm proposals; practical applications (autonomous cars) |
 | d32 260h | 0.885 | Structured reasoning | Atmospheric chemistry/gardening; robot: emotional intelligence | Sky: plant biology, companion planting; math: art/color theory "2+2 formula"; robot: MIT mindfulness research | Numbered key messages; connects mindfulness to emotional intelligence; references MIT, LinkedIn |
 | d32 290h | 0.886 | Plateau | Animal color perception; robot: Rossi/Logic 3 by Microsoft | Sky: biological color communication; math: two-scenario home buying analysis; robot: named AI system (Logic 3) | First val_bpb plateau at d32 — diminishing returns approaching |
+| d32 431h | 0.870 | same | Sky derails into mood/psychology; robot truncated | Sky starts on light/optics then pivots to mental health "skybox"; math: garbled equation; robot: cuts off early | New best val_bpb (1.8% gain); metric improved significantly but chat quality regressed — suggests pretraining gains no longer mapping to chat capability |
 
 **Notable milestones:**
 - **2h**: First time a response touches the actual topic (sky → sun/atmosphere)
