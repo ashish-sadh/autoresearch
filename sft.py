@@ -40,9 +40,35 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--max-steps", type=int, default=2000, help="Max optimizer steps")
 parser.add_argument("--batch-size", type=int, default=2)
 parser.add_argument("--lr", type=float, default=1e-4)
-parser.add_argument("--shards", type=int, default=1, help="Number of SmolTalk shards to download")
+parser.add_argument("--shards", type=int, default=1, help="Number of dataset shards to download")
+parser.add_argument("--dataset", type=str, default="openhermes", choices=["smoltalk", "openhermes"], help="SFT dataset to use")
 parser.add_argument("--base-checkpoint", type=str, default=None, help="Load base model from a deep-train checkpoint .pt file instead of auto-detecting best_model.pt")
 args = parser.parse_args()
+
+# Dataset registry — each dataset has its own HF id, parquet config, and message schema.
+DATASETS = {
+    "smoltalk": {
+        "hf_id":       "HuggingFaceTB/smoltalk",
+        "config":      "all",
+        "msg_col":     "messages",
+        "role_key":    "role",
+        "content_key": "content",
+        "user_role":   "user",
+        "asst_role":   "assistant",
+        "cache_dir":   "smoltalk",
+    },
+    "openhermes": {
+        "hf_id":       "teknium/OpenHermes-2.5",
+        "config":      "default",
+        "msg_col":     "conversations",
+        "role_key":    "from",
+        "content_key": "value",
+        "user_role":   "human",
+        "asst_role":   "gpt",
+        "cache_dir":   "openhermes",
+    },
+}
+DS = DATASETS[args.dataset]
 
 # ---------------------------------------------------------------------------
 # Paths — auto-detect depth from whichever checkpoint exists
@@ -91,11 +117,11 @@ if args.base_checkpoint:
     print(f"Loading deep-train checkpoint: depth={detected_depth}, accumulated {accum_s/3600:.1f}h pretraining")
 
 SFT_CKPT_DIR = os.path.join(CHECKPOINTS_DIR, f"d{detected_depth}_sft")
-SMOLTALK_DIR    = os.path.join(CACHE_DIR, "smoltalk")
-MAX_SEQ_LEN     = 2048
+DATA_DIR     = os.path.join(CACHE_DIR, DS["cache_dir"])
+MAX_SEQ_LEN  = 2048
 
 os.makedirs(SFT_CKPT_DIR, exist_ok=True)
-os.makedirs(SMOLTALK_DIR, exist_ok=True)
+os.makedirs(DATA_DIR, exist_ok=True)
 
 # ---------------------------------------------------------------------------
 # Device
@@ -314,28 +340,28 @@ print(f"Base model loaded. SFT: {_trainable:,} trainable / {_total:,} total para
 # Download SmolTalk
 # ---------------------------------------------------------------------------
 
-def get_smoltalk_urls(num_shards):
+def get_dataset_urls(num_shards):
     """Fetch parquet file URLs from HuggingFace datasets server API."""
-    api_url = "https://datasets-server.huggingface.co/parquet?dataset=HuggingFaceTB/smoltalk"
-    print(f"Fetching SmolTalk file list...")
+    api_url = f"https://datasets-server.huggingface.co/parquet?dataset={DS['hf_id']}"
+    print(f"Fetching {DS['hf_id']} file list...")
     resp = requests.get(api_url, timeout=30)
     resp.raise_for_status()
     all_files = resp.json()["parquet_files"]
-    train_urls = [f["url"] for f in all_files if f["split"] == "train" and f["config"] == "all"]
+    train_urls = [f["url"] for f in all_files if f["split"] == "train" and f["config"] == DS["config"]]
     return train_urls[:num_shards]
 
 
-def download_smoltalk(num_shards):
-    urls = get_smoltalk_urls(num_shards)
+def download_dataset(num_shards):
+    urls = get_dataset_urls(num_shards)
     paths = []
     for i, url in enumerate(urls):
         filename = f"train_{i:05d}.parquet"
-        filepath = os.path.join(SMOLTALK_DIR, filename)
+        filepath = os.path.join(DATA_DIR, filename)
         if os.path.exists(filepath):
             print(f"  Shard {i}: already downloaded")
         else:
             print(f"  Shard {i}: downloading from {url[:80]}...")
-            resp = requests.get(url, stream=True, timeout=120)
+            resp = requests.get(url, stream=True, timeout=600)
             resp.raise_for_status()
             tmp = filepath + ".tmp"
             with open(tmp, "wb") as f:
@@ -348,8 +374,8 @@ def download_smoltalk(num_shards):
     return paths
 
 
-print(f"\nDownloading SmolTalk ({args.shards} shard(s))...")
-shard_paths = download_smoltalk(args.shards)
+print(f"\nDownloading {args.dataset} ({args.shards} shard(s))...")
+shard_paths = download_dataset(args.shards)
 
 # ---------------------------------------------------------------------------
 # Build dataset
@@ -362,20 +388,30 @@ def format_conversation(messages):
 
     Format:
       [BOS] [user] Q tokens [end] [asst] A tokens [end] [user] Q2 [end] [asst] A2 [end] ...
+
+    System messages (OpenHermes) are prepended to the next user turn.
     """
     tokens = [bos_id]
     mask   = [0]  # no loss on BOS
+    role_key, content_key = DS["role_key"], DS["content_key"]
+    user_role, asst_role  = DS["user_role"], DS["asst_role"]
 
+    pending_system = ""
     for msg in messages:
-        role = msg.get("role", "")
-        content = msg.get("content", "")
+        role = msg.get(role_key, "")
+        content = msg.get(content_key, "")
         if not content:
             continue
-        if role == "user":
-            content_tokens = enc.encode_ordinary(content)
+        if role == "system":
+            pending_system = content.strip() + "\n\n"
+            continue
+        if role == user_role:
+            full = pending_system + content if pending_system else content
+            pending_system = ""
+            content_tokens = enc.encode_ordinary(full)
             tokens += [user_id] + content_tokens + [end_id]
             mask   += [0] * (1 + len(content_tokens) + 1)  # no loss on user turns
-        elif role == "assistant":
+        elif role == asst_role:
             content_tokens = enc.encode_ordinary(content)
             tokens += [asst_id] + content_tokens + [end_id]
             mask   += [0] + [1] * len(content_tokens) + [1]  # loss on assistant response + end
@@ -390,9 +426,8 @@ for path in shard_paths:
     pf = pq.ParquetFile(path)
     for rg_idx in range(pf.num_row_groups):
         rg = pf.read_row_group(rg_idx)
-        # SmolTalk has a "messages" column
         col_names = rg.schema.names
-        msg_col = "messages" if "messages" in col_names else col_names[0]
+        msg_col = DS["msg_col"] if DS["msg_col"] in col_names else col_names[0]
         rows = rg.column(msg_col).to_pylist()
         for row in rows:
             if row is None:

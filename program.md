@@ -6,15 +6,14 @@ This is an experiment to have the LLM do its own research.
 
 **Read this section before every experiment and after every deep-train.** The human may update it at any time to change priorities.
 
-_Current directive:_ **Continue d32 deep-train.** d32 at 80h, val_bpb 0.931. Keep training at d32 with more data and accumulate hours. Use `--max-steps 500` for SFT (2000 steps overfit). Do NOT run chat_web.py during training.
+_Current directive:_ **Continue d32 deep-train with 100-hour runs.** Use `--time 360000` for each training session. **SFT recipe at 431h+: `--max-steps 300 --lr 5e-5`** (the old `--max-steps 500` at `lr=1e-4` over-trains `end_id` on the stronger 431h base, producing 1-2 word truncated responses in chat). Do NOT run chat_web.py during training.
 
 **Cycle steps:**
-1. Grow model: `uv run train.py --time 18000 --grow-from ~/.cache/autoresearch/checkpoints/resume/deeptrain_accum_d{PREV}.pt --ckpt-name deeptrain_accum --depth {NEXT} --device-batch-size 4 > deeptrain_accum.log 2>&1`
-2. After training completes, note val_bpb. If val_bpb is within 5% of the previous depth's best, proceed with growth. If more than 5% worse, stop growing and continue training at the current depth until it catches up.
-3. Run SFT with `--max-steps 500`, do full post-pipeline (blog/README/visuals/push).
-4. Start next cycle: grow by 8 more layers and repeat.
+1. Train: `uv run train.py --time 360000 --resume --ckpt-name deeptrain_accum --depth 32 --device-batch-size 4 > deeptrain_accum.log 2>&1`
+2. After training completes, note val_bpb. Run SFT with `--max-steps 300 --lr 5e-5`, do full post-pipeline (blog/README/visuals/push).
+3. Start next 100-hour training session and repeat.
 
-**Current state:** d32 (1024-dim, 553M params) at 80h, val_bpb 0.931. Continue d32 training. Use 500-step SFT (2000 overfit). Keep 1024-dim throughout — only depth increases. Do NOT run chat_web.py during training.
+**Current state:** d32 (1024-dim, 553M params) at ~431h accumulated. **SFT recipe: `--max-steps 300 --lr 5e-5`** (diagnosed at 431h — 500 steps at 1e-4 over-sharpens end_id). Keep 1024-dim throughout. Do NOT run chat_web.py during training. **Run 100-hour sessions** (`--time 360000`).
 
 ---
 
